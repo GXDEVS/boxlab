@@ -1,13 +1,5 @@
 import { el, clear, card, select, checkbox, rangeWithEditableValue } from './components.js';
 
-const COMMODITY_OPTIONS = [
-  ['electric', 'Electric'], ['liquid', 'Liquid'], ['knives', 'Knives'],
-  ['powder', 'Powder'], ['shoes', 'Shoes'], ['bags', 'Bags'],
-  ['food', 'Food'], ['battery', 'Battery'], ['cosmetics', 'Cosmetics'],
-  ['magnetic', 'Magnetic'], ['watch', 'Watch'], ['perfume', 'Perfume'],
-  ['seafreight', 'Sea freight'], ['electronics', 'Electronic Products'],
-];
-
 const PACK_OPTS = [
   ['vacuum', 'Vácuo (compress soft)'],
   ['dropBoxes', 'Drop boxes (remove caixinha)'],
@@ -121,21 +113,6 @@ export function mount(root, store, presetsPackaging) {
     optsRow.append(el('label', { class: 'flex items-center gap-2 cursor-pointer' }, [c, el('span', {}, label)]));
   }
 
-  // ── Commodity attribute checkboxes ───────────────────────
-  const commodityInputs = {};
-  const commodityRow = el('div', { class: 'grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm' });
-  for (const [k, label] of COMMODITY_OPTIONS) {
-    const c = checkbox({
-      onchange: (e) => {
-        const set = new Set(store.get().commodityAttrs ?? []);
-        if (e.target.checked) set.add(k); else set.delete(k);
-        store.update({ commodityAttrs: [...set] });
-      },
-    });
-    commodityInputs[k] = c;
-    commodityRow.append(el('label', { class: 'flex items-center gap-2 cursor-pointer' }, [c, el('span', {}, label)]));
-  }
-
   // ── Mount static structure ───────────────────────────────
   root.append(card('Embalagem', el('div', { class: 'space-y-4' }, [
     el('div', { class: 'space-y-1.5' }, [
@@ -153,7 +130,6 @@ export function mount(root, store, presetsPackaging) {
     ]),
   ])));
   root.append(card('Opções de embalagem', optsRow));
-  root.append(card('Atributos da carga', commodityRow));
 
   function applyPreset(id) {
     if (!id) return;
@@ -194,12 +170,6 @@ export function mount(root, store, presetsPackaging) {
     for (const [k] of PACK_OPTS) {
       const want = !!s.packagingOptions[k];
       if (optInputs[k].checked !== want) optInputs[k].checked = want;
-    }
-
-    const attrs = new Set(s.commodityAttrs ?? []);
-    for (const [k] of COMMODITY_OPTIONS) {
-      const want = attrs.has(k);
-      if (commodityInputs[k].checked !== want) commodityInputs[k].checked = want;
     }
   }
 
