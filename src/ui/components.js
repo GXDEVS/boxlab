@@ -1,5 +1,5 @@
-// DOM helpers wrapping FlyonUI component classes (.btn, .input, .select, .checkbox, .range, .badge, .card).
-// FlyonUI is a Tailwind v4 component library — semantic classes do most of the styling.
+// DOM helpers built on the bx-* class system in index.html.
+// Pure Tailwind v4 (Play CDN) — no third-party plugin dependencies.
 
 export function el(tag, props = {}, children = []) {
   const node = document.createElement(tag);
@@ -23,32 +23,32 @@ export function clear(node) {
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
-// FlyonUI card layout — header optional + body.
+// Card with optional title — title sits at top, body below.
 export function card(title, body) {
-  const inner = el('div', { class: 'card-body p-4 gap-3' });
-  if (title) inner.append(el('h3', { class: 'card-title text-sm font-semibold uppercase tracking-wide text-base-content/60' }, title));
-  inner.append(body instanceof Node ? body : el('div', {}, body));
-  return el('div', { class: 'card bg-base-200/40 border border-base-content/10' }, inner);
+  const children = [];
+  if (title) children.push(el('h3', { class: 'bx-card-title' }, title));
+  children.push(body instanceof Node ? body : el('div', {}, body));
+  return el('div', { class: 'bx-card' }, children);
 }
 
 const BADGE_TONE = {
-  zinc: 'badge-soft',
-  green: 'badge-soft badge-success',
-  red: 'badge-soft badge-error',
-  amber: 'badge-soft badge-warning',
-  blue: 'badge-soft badge-info',
-  primary: 'badge-primary',
+  zinc: 'bx-badge-zinc',
+  green: 'bx-badge-green',
+  red: 'bx-badge-red',
+  amber: 'bx-badge-amber',
+  blue: 'bx-badge-blue',
+  cyan: 'bx-badge-cyan',
 };
 
 export function badge(text, tone = 'zinc') {
-  return el('span', { class: `badge ${BADGE_TONE[tone] ?? BADGE_TONE.zinc}` }, text);
+  return el('span', { class: `bx-badge ${BADGE_TONE[tone] ?? BADGE_TONE.zinc}` }, text);
 }
 
 const BUTTON_VARIANT = {
-  primary: 'btn btn-primary',
-  ghost: 'btn btn-soft',
-  danger: 'btn btn-error btn-soft',
-  icon: 'btn btn-circle btn-text btn-sm',
+  primary: 'bx-btn bx-btn-primary',
+  ghost: 'bx-btn bx-btn-ghost',
+  danger: 'bx-btn bx-btn-danger',
+  icon: 'bx-btn bx-btn-ghost bx-btn-icon',
 };
 
 export function button(label, onClick, variant = 'primary', extraClass = '') {
@@ -59,88 +59,102 @@ export function button(label, onClick, variant = 'primary', extraClass = '') {
   }, label);
 }
 
-// Form primitives —————————————————————————————
+// Form primitives ───────────────────────────────────────────
 
 export function input(props = {}) {
-  return el('input', { ...props, class: `input ${props.class ?? ''}`.trim() });
+  return el('input', { ...props, class: `bx-input ${props.class ?? ''}`.trim() });
 }
 
 export function select(props = {}, children = []) {
-  return el('select', { ...props, class: `select ${props.class ?? ''}`.trim() }, children);
+  return el('select', { ...props, class: `bx-select ${props.class ?? ''}`.trim() }, children);
 }
 
 export function checkbox(props = {}) {
-  return el('input', { type: 'checkbox', ...props, class: `checkbox checkbox-success ${props.class ?? ''}`.trim() });
+  return el('input', { type: 'checkbox', ...props, class: `bx-check ${props.class ?? ''}`.trim() });
 }
 
-// Range with optional editable value — clicking the value flips it to a number input
-// that writes back through the same onCommit channel.
+// Range with editable value — clicking the value pill turns it into a number input.
+// On Enter/blur it commits, on Escape it cancels. Range and pill stay in sync.
 export function rangeWithEditableValue({ min = 1, max = 100, step = 1, value = 1, label = '', onChange }) {
-  const valueBtn = el('button', {
+  const valuePill = el('button', {
     type: 'button',
-    class: 'text-sm tabular-nums px-2 py-0.5 rounded bg-base-content/5 hover:bg-base-content/10 transition-colors min-w-[3.25rem] text-center',
-    title: 'Editar valor',
+    class: 'bx-pill',
+    title: 'Clique pra digitar',
   }, String(value));
 
   const rangeInput = el('input', {
-    type: 'range', min: String(min), max: String(max), step: String(step), value: String(value),
-    class: 'range range-primary range-sm w-full',
+    type: 'range',
+    min: String(min), max: String(max), step: String(step), value: String(value),
+    class: 'bx-range w-full',
     'aria-label': label,
   });
+  setRangeFill(rangeInput, value, min, max);
 
   rangeInput.addEventListener('input', () => {
     const v = parseFloat(rangeInput.value);
-    valueBtn.textContent = String(v);
+    valuePill.textContent = String(v);
+    setRangeFill(rangeInput, v, min, max);
     onChange?.(v);
   });
 
-  // Toggle to number input on click
   let editing = false;
   const numInput = el('input', {
     type: 'number', min: String(min), max: String(max), step: String(step),
-    class: 'input input-sm w-20 text-sm tabular-nums',
+    class: 'bx-input w-20 text-center tabular',
+    style: { padding: '0.25rem 0.4rem', fontSize: '0.85rem', minWidth: '3.4rem' },
   });
 
-  function commitEdit() {
+  function commit() {
     if (!editing) return;
     let v = parseFloat(numInput.value);
     if (Number.isNaN(v)) v = parseFloat(rangeInput.value);
     v = Math.max(min, Math.min(max, v));
     rangeInput.value = String(v);
-    valueBtn.textContent = String(v);
-    if (numInput.parentNode) numInput.parentNode.replaceChild(valueBtn, numInput);
+    valuePill.textContent = String(v);
+    setRangeFill(rangeInput, v, min, max);
+    if (numInput.parentNode) numInput.parentNode.replaceChild(valuePill, numInput);
     editing = false;
     onChange?.(v);
   }
 
-  valueBtn.addEventListener('click', () => {
+  valuePill.addEventListener('click', () => {
     if (editing) return;
     editing = true;
     numInput.value = rangeInput.value;
-    valueBtn.parentNode.replaceChild(numInput, valueBtn);
+    valuePill.parentNode.replaceChild(numInput, valuePill);
     numInput.focus();
     numInput.select();
   });
 
   numInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
-    else if (e.key === 'Escape') { editing = false; numInput.parentNode.replaceChild(valueBtn, numInput); }
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    else if (e.key === 'Escape') {
+      editing = false;
+      if (numInput.parentNode) numInput.parentNode.replaceChild(valuePill, numInput);
+    }
   });
-  numInput.addEventListener('blur', commitEdit);
+  numInput.addEventListener('blur', commit);
 
-  const labelRow = el('div', { class: 'flex justify-between items-center text-xs text-base-content/70' }, [
+  const labelRow = el('div', { class: 'flex justify-between items-center text-xs text-white/60' }, [
     el('span', {}, label),
-    valueBtn,
+    valuePill,
   ]);
 
   return {
-    container: el('div', { class: 'space-y-1' }, [labelRow, rangeInput]),
+    container: el('div', { class: 'space-y-1.5' }, [labelRow, rangeInput]),
     rangeInput,
-    valueBtn,
+    valuePill,
     setValue(v) {
       rangeInput.value = String(v);
-      valueBtn.textContent = String(v);
+      valuePill.textContent = String(v);
+      setRangeFill(rangeInput, v, min, max);
       if (editing) numInput.value = String(v);
     },
   };
+}
+
+// Update the gradient fill of a custom range to reflect current value.
+function setRangeFill(rangeInput, value, min, max) {
+  const pct = ((value - min) / (max - min)) * 100;
+  rangeInput.style.setProperty('--bx-fill', `${pct}%`);
 }

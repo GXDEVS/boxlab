@@ -99,14 +99,14 @@ export function mount(root, store, presetsPackaging) {
   }
 
   // ── Mount static structure ───────────────────────────────
-  root.append(card('Embalagem', el('div', { class: 'space-y-3' }, [
-    el('label', { class: 'block text-sm space-y-1' }, [
-      el('span', { class: 'text-base-content/70' }, 'Preset'),
+  root.append(card('Embalagem', el('div', { class: 'space-y-4' }, [
+    el('div', { class: 'space-y-1.5' }, [
+      el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Preset'),
       presetSelect,
     ]),
     sliderRow,
-    el('label', { class: 'block text-sm space-y-1' }, [
-      el('span', { class: 'text-base-content/70' }, 'Camada de ar (folga interna)'),
+    el('div', { class: 'space-y-1.5' }, [
+      el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Camada de ar (folga interna)'),
       airSelect,
     ]),
   ])));

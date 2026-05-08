@@ -46,21 +46,23 @@ export function mount(root, store, presetsItems) {
 function itemRow(it, onRemove, onPatch) {
   const bubbleToggle = checkbox({
     checked: !!it.bubbleWrap,
-    title: 'Bolha pra esse item',
+    title: 'Aplicar bolha neste item',
     onchange: (e) => onPatch({ bubbleWrap: e.target.checked }),
   });
-  bubbleToggle.classList.add('checkbox-xs');
 
-  return el('div', { class: 'flex items-center gap-3 p-2 rounded-lg bg-base-content/5 border border-base-content/10' }, [
-    el('span', { class: 'inline-block w-3 h-3 rounded shrink-0', style: { background: it.color } }),
+  return el('div', { class: 'bx-item-row' }, [
+    el('span', {
+      class: 'bx-item-color',
+      style: { background: it.color, '--bx-color': it.color + '66' },
+    }),
     el('div', { class: 'flex-1 min-w-0' }, [
       el('div', { class: 'text-sm font-medium truncate' }, it.name),
-      el('div', { class: 'text-xs text-base-content/60' },
+      el('div', { class: 'text-xs text-white/50 tabular' },
         `${fmt(it.length)}×${fmt(it.width)}×${fmt(it.height)} cm · ${it.weight} g`),
     ]),
-    el('label', { class: 'flex items-center gap-1 text-xs text-base-content/70 cursor-pointer', title: 'Aplicar bolha neste item' }, [
+    el('label', { class: 'flex items-center gap-1.5 text-xs text-white/70 cursor-pointer select-none', title: 'Aplicar bolha neste item' }, [
       bubbleToggle,
-      el('span', {}, '🫧'),
+      el('span', { class: 'text-base' }, '🫧'),
     ]),
     button('×', onRemove, 'icon'),
   ]);
@@ -71,10 +73,8 @@ function fmt(n) {
 }
 
 function openAddModal(presets, onAdd) {
-  const overlay = el('div', { class: 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4' });
-  const dialog = el('div', { class: 'card bg-base-100 w-full max-w-lg max-h-[90vh] overflow-y-auto border border-base-content/10' });
-  const body = el('div', { class: 'card-body p-5 gap-4' });
-  dialog.append(body);
+  const overlay = el('div', { class: 'bx-overlay' });
+  const dialog = el('div', { class: 'bx-dialog space-y-4' });
 
   let activeTab = 'presets';
   const close = () => overlay.remove();
@@ -82,42 +82,49 @@ function openAddModal(presets, onAdd) {
   function tabBtn(key, label) {
     return el('button', {
       type: 'button',
-      class: `tab ${activeTab === key ? 'tab-active' : ''}`,
+      class: `bx-tab ${activeTab === key ? 'bx-tab-active' : ''}`,
       onclick: () => { activeTab = key; renderBody(); },
     }, label);
   }
 
   function renderBody() {
-    clear(body);
-    body.append(el('div', { class: 'flex items-center justify-between' }, [
-      el('h2', { class: 'card-title text-lg' }, 'Adicionar item'),
+    clear(dialog);
+    dialog.append(el('div', { class: 'flex items-center justify-between' }, [
+      el('h2', { class: 'text-lg font-semibold flex items-center gap-2' }, [
+        el('span', { class: 'bx-logo-icon' }, '＋'),
+        'Adicionar item',
+      ]),
       button('×', close, 'icon'),
     ]));
 
-    const tabs = el('div', { class: 'tabs tabs-bordered gap-2' }, [
+    dialog.append(el('div', { class: 'flex gap-2' }, [
       tabBtn('presets', 'Presets'),
       tabBtn('custom', 'Custom'),
-    ]);
-    body.append(tabs);
+    ]));
 
     if (activeTab === 'presets') {
-      body.append(el('div', { class: 'grid grid-cols-1 gap-2' },
-        presets.map(p => button(
-          `${p.name} — ${fmt(p.length)}×${fmt(p.width)}×${fmt(p.height)} cm · ${p.weight} g`,
-          () => { onAdd({ ...p }); close(); },
-          'ghost',
-          'justify-start',
-        ))));
+      dialog.append(el('div', { class: 'space-y-2' },
+        presets.map(p => el('button', {
+          type: 'button',
+          class: 'bx-btn bx-btn-ghost w-full',
+          style: { justifyContent: 'space-between', padding: '0.7rem 0.95rem' },
+          onclick: () => { onAdd({ ...p }); close(); },
+        }, [
+          el('span', { class: 'text-left' }, p.name),
+          el('span', { class: 'text-xs text-white/50 tabular' },
+            `${fmt(p.length)}×${fmt(p.width)}×${fmt(p.height)} cm · ${p.weight}g`),
+        ]))));
     } else {
       const inputs = {};
 
       function field(k, label, type = 'number', step = '0.1') {
-        const props = { name: k, type, step };
+        const props = { name: k, type };
+        if (step) props.step = step;
         if (type === 'number') props.min = '0';
-        const i = input({ ...props, class: 'w-full' });
+        const i = input(props);
         inputs[k] = i;
-        return el('label', { class: 'block text-sm space-y-1' }, [
-          el('span', { class: 'text-base-content/70' }, label),
+        return el('div', { class: 'space-y-1.5' }, [
+          el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, label),
           i,
         ]);
       }
@@ -125,10 +132,10 @@ function openAddModal(presets, onAdd) {
       function flagCheck(key, label) {
         const c = checkbox({ name: key });
         inputs[key] = c;
-        return el('label', { class: 'flex items-center gap-2 text-sm' }, [c, el('span', {}, label)]);
+        return el('label', { class: 'flex items-center gap-2 text-sm cursor-pointer select-none' }, [c, el('span', {}, label)]);
       }
 
-      body.append(el('div', { class: 'space-y-3' }, [
+      dialog.append(el('div', { class: 'space-y-4' }, [
         field('name', 'Nome', 'text', null),
         el('div', { class: 'grid grid-cols-3 gap-2' }, [
           field('length', 'C (cm)'),
@@ -136,13 +143,16 @@ function openAddModal(presets, onAdd) {
           field('height', 'A (cm)'),
         ]),
         field('weight', 'Peso (g)', 'number', '1'),
-        el('div', { class: 'flex flex-wrap gap-3 text-sm' }, [
-          flagCheck('hasOriginalBox', 'Tem caixa original'),
-          flagCheck('isSoft', 'É macio (soft)'),
-          flagCheck('hasOriginalPlastic', 'Tem plástico original'),
-          flagCheck('bubbleWrap', '🫧 Aplicar bolha'),
+        el('div', { class: 'space-y-2 pt-1' }, [
+          el('div', { class: 'text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Flags'),
+          el('div', { class: 'grid grid-cols-2 gap-2' }, [
+            flagCheck('hasOriginalBox', 'Tem caixa original'),
+            flagCheck('isSoft', 'É macio (soft)'),
+            flagCheck('hasOriginalPlastic', 'Tem plástico original'),
+            flagCheck('bubbleWrap', '🫧 Aplicar bolha'),
+          ]),
         ]),
-        button('Adicionar', () => {
+        button('Adicionar item', () => {
           const item = {
             name: inputs.name.value || 'Item sem nome',
             length: parseFloat(inputs.length.value),
@@ -160,7 +170,7 @@ function openAddModal(presets, onAdd) {
           if (!(item.length > 0 && item.width > 0 && item.height > 0 && item.weight > 0)) return;
           onAdd(item);
           close();
-        }),
+        }, 'primary', 'w-full mt-2'),
       ]));
     }
   }
