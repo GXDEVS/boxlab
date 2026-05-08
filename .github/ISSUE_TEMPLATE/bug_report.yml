@@ -1,0 +1,61 @@
+name: 🐛 Bug report
+description: Reportar um comportamento inesperado
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: O que aconteceu?
+      description: Descreva o bug e o impacto.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos pra reproduzir
+      placeholder: |
+        1. Abrir https://gxdevs.github.io/boxlab/
+        2. Adicionar item X
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: expected
+    attributes:
+      label: Comportamento esperado
+    validations:
+      required: true
+
+  - type: input
+    id: actual
+    attributes:
+      label: Comportamento atual
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Navegador
+      options:
+        - Chrome / Chromium
+        - Firefox
+        - Safari
+        - Edge
+        - Outro
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Erros no console (DevTools)
+      render: text
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Contexto adicional
+      description: Screenshots, links, configuração específica...

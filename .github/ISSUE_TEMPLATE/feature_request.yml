@@ -1,0 +1,31 @@
+name: ✨ Feature request
+description: Sugerir uma melhoria ou funcionalidade nova
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivação
+      description: Que problema isso resolve? Quem se beneficia?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Como você imagina que deveria funcionar?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+      description: Outros caminhos que você pensou e por que não escolheu
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Contexto adicional
+      description: Mockups, links, referências...
