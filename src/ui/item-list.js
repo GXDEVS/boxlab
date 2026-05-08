@@ -64,7 +64,12 @@ function itemRow(it, onRemove, onPatch) {
       style: { background: it.color, boxShadow: `0 0 10px ${it.color}66` },
     }),
     el('div', { class: 'flex-1 min-w-0' }, [
-      el('div', { class: 'text-sm font-medium truncate' }, it.name),
+      el('div', { class: 'text-sm font-medium truncate flex items-center gap-1.5' }, [
+        el('span', {}, it.name),
+        it.flags?.hasOriginalBox
+          ? el('span', { class: 'badge badge-xs badge-success badge-soft', title: 'Tem caixa original — pode dispensar caixa externa' }, '✓ caixa')
+          : null,
+      ]),
       el('div', { class: 'text-xs text-base-content/50 tabular' },
         `${fmt(it.length)}×${fmt(it.width)}×${fmt(it.height)} cm · ${it.weight} g`),
     ]),

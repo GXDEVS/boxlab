@@ -2,6 +2,7 @@ import { createStore } from './state/store.js';
 import { applyMods } from './packing/volume-mods.js';
 import { pack } from './packing/ffd3d.js';
 import { calcWeights } from './core/weight.js';
+import { bboxOfItems } from './core/bbox.js';
 
 import * as itemList from './ui/item-list.js';
 import * as packagingForm from './ui/packaging-form.js';
@@ -44,7 +45,26 @@ const threeMeshes = [];
 function recompute() {
   const s = store.get();
   const effective = applyMods(s.items, s.packagingOptions);
-  const packing = pack(effective, s.box);
+  const isOriginalMode = s.packagingOptions.shipMode === 'original';
+
+  // In 'original' mode the items ARE the package — compute the bbox they
+  // naturally occupy and use that as the box. No outer wrapper is rendered.
+  let box, packing;
+  if (isOriginalMode) {
+    const bbox = bboxOfItems(effective);
+    box = { length: bbox.length, width: bbox.width, height: bbox.height, type: s.box.type, presetId: null };
+    packing = {
+      fits: true,
+      positions: bbox.positions,
+      overflow: bbox.overflow,
+      tooManyItems: false,
+      packingFootprint: { length: bbox.length, width: bbox.width, height: bbox.height },
+    };
+  } else {
+    box = s.box;
+    packing = pack(effective, s.box);
+  }
+
   for (const p of packing.positions) {
     const orig = s.items.find(i => i.id === p.id);
     p.color = orig?.color || '#3b82f6';
@@ -52,16 +72,16 @@ function recompute() {
   }
   // calcWeights uses effective items so 'Peso real estimado' reflects bubble,
   // dropBoxes and removePlasticBags weight effects.
-  const weights = calcWeights(effective, s.box);
+  const weights = calcWeights(effective, box);
 
-  currentResults = { weights, packing };
-  log('recompute', { weights, packing });
+  currentResults = { weights, packing, isOriginalMode };
+  log('recompute', { weights, packing, isOriginalMode });
 
   results.rerender();
-  if (three) renderThree(s.box, packing.positions, s.items);
+  if (three) renderThree(box, packing.positions, s.items, { hideContainer: isOriginalMode });
 }
 
-function renderThree(box, positions, items) {
+function renderThree(box, positions, items, opts = {}) {
   while (threeMeshes.length) {
     const m = threeMeshes.pop();
     three.group.remove(m.mesh);
@@ -69,9 +89,14 @@ function renderThree(box, positions, items) {
   }
 
   three.group.position.set(-box.length / 2, -box.height / 2, -box.width / 2);
-  const boxMesh = makeBoxMesh(box);
-  three.group.add(boxMesh.mesh);
-  threeMeshes.push(boxMesh);
+
+  // In ship-as-is/original mode the items ARE the package; skip the outer wireframe
+  // so the user sees just what's actually being shipped.
+  if (!opts.hideContainer) {
+    const boxMesh = makeBoxMesh(box);
+    three.group.add(boxMesh.mesh);
+    threeMeshes.push(boxMesh);
+  }
 
   for (const p of positions) {
     const item = items.find(i => i.id === p.id);
@@ -85,7 +110,7 @@ function renderThree(box, positions, items) {
     threeMeshes.push(meshObj);
   }
 
-  const diag = Math.hypot(box.length, box.width, box.height);
+  const diag = Math.hypot(Math.max(1, box.length), Math.max(1, box.width), Math.max(1, box.height));
   three.camera.far = Math.max(1000, diag * 5);
   three.camera.updateProjectionMatrix();
 }

@@ -10,6 +10,7 @@ const DEFAULT_STATE = {
     dropBoxes: false,
     removePlasticBags: false,
     airLayerCm: 0,   // espaço de "ar" entre itens e paredes da caixa
+    shipMode: 'external',  // 'external' = caixa/bolsa por fora; 'original' = sem caixa externa, usa a caixa do produto
   },
   commodityAttrs: [],
   customItems: [],
