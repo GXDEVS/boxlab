@@ -7,6 +7,7 @@ const baseItem = (over = {}) => ({
   flags: { hasOriginalBox: false, isSoft: false, hasOriginalPlastic: false },
   coreDims: null,
   bubbleWrap: false,
+  bagged: false,
   originalBoxWeight: 0,
   originalPlasticWeight: 0,
   ...over,
@@ -127,5 +128,31 @@ describe('applyMods — weight effects', () => {
     // bubble: dims 10×10×10, surface=600, weight 150+6=156
     assert.equal(out[0].length, 10);
     assert.equal(out[0].weight, 150 + Math.round(600 / 100));
+  });
+
+  it('bagged adds +0.4cm to each dim and +5g', () => {
+    const items = [baseItem({ bagged: true })];
+    const out = applyMods(items, {});
+    assert.equal(out[0].length, 10.4);
+    assert.equal(out[0].width, 10.4);
+    assert.equal(out[0].height, 10.4);
+    assert.equal(out[0].weight, 105);
+  });
+
+  it('bagged is independent of bubbleWrap (compose: bag inside bubble)', () => {
+    const items = [baseItem({ bagged: true, bubbleWrap: true })];
+    const out = applyMods(items, {});
+    // bag first: 10.4×10.4×10.4, weight 105
+    // bubble next: 11.4×11.4×11.4, surface = 6 × 11.4² = 779.76, /100 ≈ 8 (rounded)
+    assert.equal(out[0].length, 11.4);
+    const surface = 2 * (11.4 * 11.4 + 11.4 * 11.4 + 11.4 * 11.4);
+    assert.equal(out[0].weight, 105 + Math.round(surface / 100));
+  });
+
+  it('bagged item without other mods does not affect non-bagged items', () => {
+    const items = [baseItem({ id: 'a', bagged: true }), baseItem({ id: 'b', bagged: false })];
+    const out = applyMods(items, {});
+    assert.equal(out[0].length, 10.4);
+    assert.equal(out[1].length, 10);
   });
 });

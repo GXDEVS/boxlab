@@ -76,7 +76,11 @@ function renderThree(box, positions, items) {
   for (const p of positions) {
     const item = items.find(i => i.id === p.id);
     if (!item) continue;
-    const meshObj = makeItemMesh(p, { ...item, color: p.color }, { bubbled: !!item.bubbleWrap });
+    const meshObj = makeItemMesh(
+      p,
+      { ...item, color: p.color },
+      { bubbled: !!item.bubbleWrap, bagged: !!item.bagged },
+    );
     three.group.add(meshObj.mesh);
     threeMeshes.push(meshObj);
   }

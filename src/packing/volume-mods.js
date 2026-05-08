@@ -1,13 +1,22 @@
 // Apply order:
 //   1. dropBoxes        — substitute original-box dims with coreDims AND subtract originalBoxWeight
 //   2. removePlasticBags — shrink dims 5% AND subtract originalPlasticWeight
-//   3. vacuum            — compress longest dim 30% (no weight change — vacuum just rearranges volume)
-//   4. per-item bubble   — +1cm in each axis AND add bubble wrap weight by surface area
-//   5. air layer (global) — +airLayerCm in each axis on every item (no weight change — air is air)
+//   3. vacuum            — compress longest dim 30% (no weight change)
+//   4. per-item bagged   — +0.4cm in each axis AND +5g (small plastic bag)
+//   5. per-item bubble   — +1cm in each axis AND add bubble wrap weight by surface area
+//   6. air layer (global) — +airLayerCm in each axis on every item (no weight change)
 //
-// Bubble wrap density: ~1g per ~100cm² of surface area (rough estimate, single layer plus a bit of overlap).
+// Bag goes BEFORE bubble in the apply order so that when both are checked the bag sits inside
+// the bubble layer — that matches how CSSBuy actually packages (item → bag → bubble).
 //
-// Weight values cannot go below zero — clamp to ≥ 0 after each subtraction.
+// Bubble wrap density: ~1g per ~100cm² of surface area.
+// Bag weight: flat 5g for a small plastic bag. Real bags vary 3-15g; we pick a middle estimate.
+//
+// Weight values are clamped to ≥ 0 after each subtraction.
+
+const BAG_PADDING_CM = 0.4;
+const BAG_WEIGHT_G   = 5;
+
 export function applyMods(items, options = {}) {
   const air = Math.max(0, parseFloat(options.airLayerCm ?? 0) || 0);
 
@@ -34,7 +43,13 @@ export function applyMods(items, options = {}) {
       const dims = ['length', 'width', 'height'];
       const largest = dims.reduce((a, b) => (out[a] >= out[b] ? a : b));
       out[largest] *= 0.7;
-      // vacuum doesn't change weight
+    }
+
+    if (out.bagged) {
+      out.length += BAG_PADDING_CM;
+      out.width  += BAG_PADDING_CM;
+      out.height += BAG_PADDING_CM;
+      out.weight = (out.weight ?? 0) + BAG_WEIGHT_G;
     }
 
     if (out.bubbleWrap) {
@@ -49,7 +64,6 @@ export function applyMods(items, options = {}) {
       out.length += air;
       out.width += air;
       out.height += air;
-      // air is air — no weight added
     }
 
     return out;

@@ -25,6 +25,7 @@ export function mount(root, store, presetsItems) {
     const id = it.id ?? (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'i' + Date.now() + Math.random().toString(36).slice(2));
     const item = { ...it, id, color: colorFor(id) };
     if (item.bubbleWrap === undefined) item.bubbleWrap = false;
+    if (item.bagged === undefined) item.bagged = false;
     store.update({ items: [...s.items, item] });
   }
 
@@ -46,8 +47,13 @@ export function mount(root, store, presetsItems) {
 function itemRow(it, onRemove, onPatch) {
   const bubbleToggle = checkbox({
     checked: !!it.bubbleWrap,
-    title: 'Aplicar bolha neste item',
+    title: 'Aplicar plástico bolha neste item',
     onchange: (e) => onPatch({ bubbleWrap: e.target.checked }),
+  });
+  const bagToggle = checkbox({
+    checked: !!it.bagged,
+    title: 'Pôr este item em saco plástico',
+    onchange: (e) => onPatch({ bagged: e.target.checked }),
   });
 
   return el('div', { class: 'bx-item-row' }, [
@@ -60,9 +66,13 @@ function itemRow(it, onRemove, onPatch) {
       el('div', { class: 'text-xs text-white/50 tabular' },
         `${fmt(it.length)}×${fmt(it.width)}×${fmt(it.height)} cm · ${it.weight} g`),
     ]),
-    el('label', { class: 'flex items-center gap-1.5 text-xs text-white/70 cursor-pointer select-none', title: 'Aplicar bolha neste item' }, [
+    el('label', { class: 'flex items-center gap-1.5 text-xs text-white/70 cursor-pointer select-none', title: 'Plástico bolha' }, [
       bubbleToggle,
       el('span', { class: 'text-base' }, '🫧'),
+    ]),
+    el('label', { class: 'flex items-center gap-1.5 text-xs text-white/70 cursor-pointer select-none', title: 'Em saco plástico' }, [
+      bagToggle,
+      el('span', { class: 'text-base' }, '🛍️'),
     ]),
     button('×', onRemove, 'icon'),
   ]);
@@ -150,6 +160,7 @@ function openAddModal(presets, onAdd) {
             flagCheck('isSoft', 'É macio (soft)'),
             flagCheck('hasOriginalPlastic', 'Tem plástico original'),
             flagCheck('bubbleWrap', '🫧 Aplicar bolha'),
+            flagCheck('bagged', '🛍️ Em saco plástico'),
           ]),
         ]),
         button('Adicionar item', () => {
@@ -165,6 +176,7 @@ function openAddModal(presets, onAdd) {
               hasOriginalPlastic: inputs.hasOriginalPlastic.checked,
             },
             bubbleWrap: inputs.bubbleWrap.checked,
+            bagged: inputs.bagged.checked,
             coreDims: null,
           };
           if (!(item.length > 0 && item.width > 0 && item.height > 0 && item.weight > 0)) return;
