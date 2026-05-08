@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BoxLab — Calculadora de Cubagem CSSBuy</title>
+
+    <!-- Tailwind v4 Play CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- FlyonUI -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flyonui@latest/dist/full.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/flyonui@latest/flyonui.js" defer></script>
+
+    <!-- Importmap for ES module aliases (three) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <style>
+      html, body { height: 100%; }
+      body { background: #0b0e14; color: #e5e7eb; }
+      #three-viewport { width: 100%; aspect-ratio: 16 / 9; background: #0f1218; border-radius: 0.75rem; }
+    </style>
+  </head>
+  <body class="font-sans antialiased">
+    <div id="app" class="min-h-screen p-4 lg:p-8 max-w-7xl mx-auto">
+      <header class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold">BoxLab — Calculadora de Cubagem CSSBuy</h1>
+        <a href="#exclusoes" class="text-sm underline">Exclusões do seguro</a>
+      </header>
+
+      <main class="grid lg:grid-cols-2 gap-6">
+        <section id="form-column" class="space-y-6">
+          <div id="items-mount"></div>
+          <div id="packaging-mount"></div>
+        </section>
+        <section id="preview-column" class="space-y-6">
+          <div id="three-viewport-wrap" class="relative">
+            <div id="three-viewport"></div>
+            <button id="reset-camera" class="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-zinc-800/80 hover:bg-zinc-700">Reset câmera</button>
+          </div>
+          <div id="results"></div>
+          <div id="freights"></div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
