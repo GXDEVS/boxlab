@@ -7,7 +7,8 @@
     "height": 3.5,
     "weight": 200,
     "flags": { "hasOriginalBox": true, "isSoft": false, "hasOriginalPlastic": true },
-    "coreDims": { "length": 12, "width": 3.5, "height": 3 }
+    "coreDims": { "length": 12, "width": 3.5, "height": 3 },
+    "bubbleWrap": true
   },
   {
     "id": "telesin-case",
@@ -17,7 +18,8 @@
     "height": 4,
     "weight": 80,
     "flags": { "hasOriginalBox": true, "isSoft": false, "hasOriginalPlastic": false },
-    "coreDims": { "length": 6, "width": 4, "height": 3 }
+    "coreDims": { "length": 6, "width": 4, "height": 3 },
+    "bubbleWrap": false
   },
   {
     "id": "tshirt-cotton",
@@ -27,7 +29,8 @@
     "height": 4,
     "weight": 200,
     "flags": { "hasOriginalBox": false, "isSoft": true, "hasOriginalPlastic": true },
-    "coreDims": null
+    "coreDims": null,
+    "bubbleWrap": false
   },
   {
     "id": "iphone-box",
@@ -37,7 +40,8 @@
     "height": 5,
     "weight": 350,
     "flags": { "hasOriginalBox": true, "isSoft": false, "hasOriginalPlastic": true },
-    "coreDims": { "length": 14.7, "width": 7.2, "height": 0.8 }
+    "coreDims": { "length": 14.7, "width": 7.2, "height": 0.8 },
+    "bubbleWrap": true
   },
   {
     "id": "perfume-100ml",
@@ -47,6 +51,7 @@
     "height": 14,
     "weight": 400,
     "flags": { "hasOriginalBox": true, "isSoft": false, "hasOriginalPlastic": false },
-    "coreDims": { "length": 8, "width": 4, "height": 13 }
+    "coreDims": { "length": 8, "width": 4, "height": 13 },
+    "bubbleWrap": true
   }
 ]

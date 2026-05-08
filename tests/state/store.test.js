@@ -8,7 +8,8 @@ describe('createStore', () => {
     const s = store.get();
     assert.deepEqual(s.items, []);
     assert.equal(s.box.type, 'box');
-    assert.equal(s.packagingOptions.bubbleWrap, true);
+    assert.equal(s.packagingOptions.airLayerCm, 0);
+    assert.equal(s.packagingOptions.dropBoxes, false);
   });
 
   it('update merges shallowly and notifies subscribers', () => {

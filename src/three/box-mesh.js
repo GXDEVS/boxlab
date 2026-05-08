@@ -1,17 +1,36 @@
 import * as THREE from 'three';
 
-// World axis convention: x=length, y=height, z=width.
-// Box origin in our packing world is (0,0,0) at min corner.
-// In Three.js, we render the box centered on origin and offset the parent group.
+// Renders the container box as: translucent faces + crisp wireframe edges.
+// In Three.js: x=length, y=height, z=width. Caller offsets the parent group so origin = box's min corner.
 export function makeBoxMesh(box) {
   const geo = new THREE.BoxGeometry(box.length, box.height, box.width);
-  const edges = new THREE.EdgesGeometry(geo);
-  geo.dispose();
-  const mat = new THREE.LineBasicMaterial({ color: 0xff7a45, transparent: true, opacity: 0.7 });
-  const lines = new THREE.LineSegments(edges, mat);
-  lines.position.set(box.length / 2, box.height / 2, box.width / 2);
+
+  const faceMat = new THREE.MeshStandardMaterial({
+    color: 0xff7a45,
+    transparent: true,
+    opacity: 0.06,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const faces = new THREE.Mesh(geo, faceMat);
+  faces.position.set(box.length / 2, box.height / 2, box.width / 2);
+
+  const edgesGeo = new THREE.EdgesGeometry(geo);
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xff7a45, transparent: true, opacity: 0.85 });
+  const edges = new THREE.LineSegments(edgesGeo, lineMat);
+  edges.position.copy(faces.position);
+
+  const group = new THREE.Group();
+  group.add(faces);
+  group.add(edges);
+
   return {
-    mesh: lines,
-    dispose() { edges.dispose(); mat.dispose(); },
+    mesh: group,
+    dispose() {
+      geo.dispose();
+      edgesGeo.dispose();
+      faceMat.dispose();
+      lineMat.dispose();
+    },
   };
 }

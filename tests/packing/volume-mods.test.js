@@ -6,6 +6,7 @@ const baseItem = (over = {}) => ({
   id: 'a', name: 'a', length: 10, width: 10, height: 10, weight: 100,
   flags: { hasOriginalBox: false, isSoft: false, hasOriginalPlastic: false },
   coreDims: null,
+  bubbleWrap: false,
   ...over,
 });
 
@@ -18,7 +19,10 @@ describe('applyMods', () => {
   });
 
   it('vacuum compresses largest dim of soft items by 30%', () => {
-    const items = [baseItem({ length: 25, width: 18, height: 4, flags: { isSoft: true, hasOriginalBox: false, hasOriginalPlastic: false } })];
+    const items = [baseItem({
+      length: 25, width: 18, height: 4,
+      flags: { isSoft: true, hasOriginalBox: false, hasOriginalPlastic: false },
+    })];
     const out = applyMods(items, { vacuum: true });
     assert.equal(out[0].length, 25 * 0.7);
   });
@@ -29,11 +33,17 @@ describe('applyMods', () => {
     assert.equal(out[0].length, 10);
   });
 
-  it('bubble adds +1cm to all dims of every item', () => {
-    const items = [baseItem(), baseItem({ id: 'b', length: 5, width: 5, height: 5 })];
+  it('per-item bubbleWrap adds +1cm to all dims, only on flagged items', () => {
+    const items = [baseItem({ bubbleWrap: true }), baseItem({ id: 'b', length: 5, width: 5, height: 5 })];
+    const out = applyMods(items, {});
+    assert.equal(out[0].length, 11);   // bubbled
+    assert.equal(out[1].length, 5);    // not bubbled
+  });
+
+  it('global options.bubbleWrap is no longer applied (it is per-item now)', () => {
+    const items = [baseItem()];
     const out = applyMods(items, { bubbleWrap: true });
-    assert.equal(out[0].length, 11);
-    assert.equal(out[1].length, 6);
+    assert.equal(out[0].length, 10);   // global flag is ignored
   });
 
   it('dropBoxes uses coreDims when hasOriginalBox=true', () => {
@@ -60,12 +70,31 @@ describe('applyMods', () => {
     assert.equal(out[0].length, 10 * 0.95);
   });
 
-  it('compose: vacuum + bubble apply in order vacuum then bubble', () => {
+  it('compose: vacuum + per-item bubble + air layer apply in order', () => {
     const items = [baseItem({
       length: 10, width: 10, height: 10,
       flags: { isSoft: true, hasOriginalBox: false, hasOriginalPlastic: false },
+      bubbleWrap: true,
     })];
-    const out = applyMods(items, { vacuum: true, bubbleWrap: true });
-    assert.equal(out[0].length, 10 * 0.7 + 1);
+    const out = applyMods(items, { vacuum: true, airLayerCm: 2 });
+    // vacuum: length 10 -> 7
+    // bubble: +1 -> 8
+    // air layer +2 -> 10
+    assert.equal(out[0].length, 10);
+    // width/height: bubble +1 then air +2
+    assert.equal(out[0].width, 13);
+  });
+
+  it('air layer applies uniformly to all items even without other flags', () => {
+    const items = [baseItem(), baseItem({ id: 'b', length: 5, width: 5, height: 5 })];
+    const out = applyMods(items, { airLayerCm: 1 });
+    assert.equal(out[0].length, 11);
+    assert.equal(out[1].length, 6);
+  });
+
+  it('air layer 0 (default) is a no-op', () => {
+    const items = [baseItem()];
+    const out = applyMods(items, { airLayerCm: 0 });
+    assert.equal(out[0].length, 10);
   });
 });

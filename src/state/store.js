@@ -1,4 +1,4 @@
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const STORAGE_KEY = 'boxlab.v1';
 
 const DEFAULT_STATE = {
@@ -7,9 +7,9 @@ const DEFAULT_STATE = {
   packagingOptions: {
     priorityPackaging: false,
     vacuum: false,
-    bubbleWrap: true,
     dropBoxes: false,
     removePlasticBags: false,
+    airLayerCm: 0,   // espaço de "ar" entre itens e paredes da caixa
   },
   commodityAttrs: [],
   customItems: [],
