@@ -3,7 +3,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export function createScene(canvasParent) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0f1218);
+  // Match the page's base-200 color so the WebGL canvas blends with the
+  // viewport card. Read at init from the parent's computed background.
+  const bgColor = readBaseColor(canvasParent) ?? 0x1d1d1d;
+  scene.background = new THREE.Color(bgColor);
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
   camera.position.set(40, 30, 40);
@@ -57,4 +60,19 @@ export function createScene(canvasParent) {
   }
 
   return { scene, group, camera, controls, dispose, resetCamera };
+}
+
+// Read the actual rendered background color of the parent div so the WebGL
+// scene background matches whatever palette is in effect.
+function readBaseColor(el) {
+  try {
+    const cs = getComputedStyle(el).backgroundColor;
+    // cs is like "rgb(29, 29, 29)" or "oklch(...)"; try to parse rgb form.
+    const m = cs.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (m) {
+      const r = parseInt(m[1], 10), g = parseInt(m[2], 10), b = parseInt(m[3], 10);
+      return (r << 16) | (g << 8) | b;
+    }
+  } catch {}
+  return null;
 }
