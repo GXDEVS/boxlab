@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BoxLab — Calculadora de Cubagem CSSBuy</title>
 
-    <!-- Inter font for clean numeric UI -->
+    <!-- Fonts: Inter for body, Bricolage Grotesque for the brand title -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet" />
+
+    <!-- Iconify icon web component -->
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 
     <!-- daisyUI v5 + Tailwind v4 (Play CDN, no build step) -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
@@ -94,6 +97,16 @@
 
       .tabular { font-variant-numeric: tabular-nums; }
 
+      /* Brand title — Bricolage Grotesque, expressive geometric display.
+         Tightened tracking and a subtle leading lift to feel like a logotype. */
+      .brand {
+        font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+        font-weight: 800;
+        letter-spacing: -0.035em;
+        line-height: 1;
+        font-size: 1.6rem;
+      }
+
       /* Modal backdrop (works for both div.modal.modal-open and dialog.modal) */
       .modal.modal-open,
       dialog.modal[open] {
@@ -126,12 +139,9 @@
   </head>
   <body class="antialiased">
     <div id="app" class="min-h-screen p-4 lg:p-8 max-w-[1400px] mx-auto">
-      <header class="mb-8 flex items-center gap-3">
-        <span class="text-2xl text-primary">▣</span>
-        <div>
-          <h1 class="text-xl font-bold tracking-tight">BoxLab</h1>
-          <p class="text-xs text-base-content/60">Calculadora 3D de cubagem · CSSBuy · Brasil</p>
-        </div>
+      <header class="mb-8 flex items-center gap-2.5">
+        <iconify-icon icon="ph:cube-duotone" width="36" class="text-primary"></iconify-icon>
+        <h1 class="brand">BoxLab</h1>
       </header>
 
       <main class="grid lg:grid-cols-2 gap-5">
