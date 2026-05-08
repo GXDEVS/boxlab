@@ -16,11 +16,13 @@ import { makeItemMesh } from './three/item-mesh.js';
 const debug = new URL(location.href).searchParams.get('debug') === '1';
 const log = (...a) => debug && console.log('[boxlab]', ...a);
 
-const [presetsItems, presetsPackaging, freights] = await Promise.all([
+const [presetsItems, presetsPackaging, freightsRaw] = await Promise.all([
   fetch('./src/data/presets-items.json').then(r => r.json()),
   fetch('./src/data/presets-packaging.json').then(r => r.json()),
   fetch('./src/data/freights.json').then(r => r.json()),
 ]);
+// freights.json is now { _source, _capturedAt, items: [...] }
+const freights = freightsRaw.items ?? freightsRaw;
 
 const store = createStore();
 
@@ -57,11 +59,29 @@ function recompute() {
   }
   const weights = calcWeights(s.items, s.box);
   const freight = scoreFreights({
-    chargedKg: weights.chargedKg,
+    weights,
     commodityAttrs: s.commodityAttrs ?? [],
   }, freights);
 
-  currentResults = { weights, packing, freight };
+  // Derive a single "Você paga por" for the results panel:
+  // minimum chargedKg across compatible freights; falls back to real if none compatible.
+  const chargedKgsCompat = freight.compatible.map(c => c.chargedKg);
+  const minChargedKg = chargedKgsCompat.length ? Math.min(...chargedKgsCompat) : weights.realWeightKg;
+  const cheapest = freight.compatible.find(c => c.chargedKg === minChargedKg);
+  const chargedSource = cheapest?.freight.pureWeight ? 'real'
+                      : minChargedKg > weights.realWeightKg + 1e-9 ? 'cubic'
+                      : 'real';
+
+  currentResults = {
+    weights: {
+      ...weights,
+      chargedKg: minChargedKg,
+      chargedSource,
+      cubicWeightKg: weights.volumeCm3 / 5000,
+    },
+    packing,
+    freight,
+  };
   log('recompute', { weights, packing, freight });
 
   results.rerender();

@@ -12,6 +12,24 @@ export function mount(root, getFreightResult) {
     }
     const { recommended, compatible, incompatible } = r;
 
+    // Banner: when ≥50% of catalog is filtered out, name the top culprit commodity.
+    const total = compatible.length + incompatible.length;
+    if (total > 0 && incompatible.length / total >= 0.5) {
+      const counts = {};
+      for (const inc of incompatible) {
+        for (const reason of inc.reasons) {
+          const m = reason.match(/Não transporta (.+)/);
+          if (m) counts[m[1]] = (counts[m[1]] ?? 0) + 1;
+        }
+      }
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      if (top) {
+        root.append(el('div', {
+          class: 'bx-banner bx-banner-amber',
+        }, `⚠ ${top[0]} filtra ${top[1]} de ${total} fretes. Procure linhas que aceitam essa carga.`));
+      }
+    }
+
     if (recommended) {
       root.append(card('★ Frete recomendado', recommendedCard(recommended)));
     } else {
@@ -55,8 +73,11 @@ export function mount(root, getFreightResult) {
         badge(`${f.weightRange.min}-${f.weightRange.max}kg`, 'blue'),
         badge(priceLabel(f.priceTier), priceTone(f.priceTier)),
         badge(f.type, 'cyan'),
+        badge(`🕒 ${f.transitDays.min}-${f.transitDays.max}d`, 'cyan'),
+        badge(f.pureWeight ? '⚖️ peso real' : `📦 cubado ÷${f.volumetricDivisor}`, 'zinc'),
       ]),
       f.notes ? el('div', { class: 'text-xs text-white/60' }, f.notes) : null,
+      chargedLine(scored),
       scoreBreakdown(scored.breakdown, scored.score),
     ]);
   }
@@ -76,9 +97,17 @@ export function mount(root, getFreightResult) {
         badge(`${f.weightRange.min}-${f.weightRange.max}kg`, 'blue'),
         badge(priceLabel(f.priceTier), priceTone(f.priceTier)),
         badge(f.type, 'cyan'),
+        badge(`🕒 ${f.transitDays.min}-${f.transitDays.max}d`, 'cyan'),
+        badge(f.pureWeight ? '⚖️ real' : `📦 ÷${f.volumetricDivisor}`, 'zinc'),
       ]),
       f.notes ? el('div', { class: 'text-xs text-white/50 mt-1' }, f.notes) : null,
+      chargedLine(scored),
     ]);
+  }
+
+  function chargedLine(scored) {
+    return el('div', { class: 'text-xs text-white/55 tabular mt-1' },
+      `Você paga por: ${(scored.chargedKg * 1000).toFixed(0)} g (${scored.freight.pureWeight ? 'peso real' : 'cubado'})`);
   }
 
   function priceLabel(tier) {
@@ -107,6 +136,7 @@ export function mount(root, getFreightResult) {
       bar('Preço', b.price),
       bar('Tipo', b.type),
       bar('Headroom', b.headroom),
+      bar('Transit', b.transit),
       el('div', { class: 'flex justify-between items-center pt-1 mt-1 border-t border-white/5' }, [
         el('span', { class: 'text-xs uppercase tracking-wide text-white/40 font-medium' }, 'Score total'),
         el('span', { class: 'text-base font-bold tabular text-emerald-400' }, `${score.toFixed(1)} / 100`),

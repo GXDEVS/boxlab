@@ -13,11 +13,13 @@ export function mount(root, getResults) {
     const grid = el('div', { class: 'grid grid-cols-2 lg:grid-cols-4 gap-2' }, [
       stat('Volume da caixa', `${weights.volumeCm3.toLocaleString('pt-BR')} cm³`),
       stat('Peso real estimado', `${weights.realWeightG.toFixed(0)} g`),
-      stat('Peso cubado (÷5000)', `${(weights.cubicWeightKg * 1000).toFixed(0)} g`),
+      stat('Peso cubado (÷5000)', `${(weights.cubicWeightKg * 1000).toFixed(0)} g`,
+           'zinc', 'Estimativa com divisor padrão 5000. Cada frete pode usar divisor diferente.'),
       stat(
         'Você paga por',
         `${(weights.chargedKg * 1000).toFixed(0)} g`,
         weights.chargedSource === 'cubic' ? 'amber' : 'green',
+        'Mínimo entre os fretes compatíveis. Cada frete cobra de forma diferente — veja por card.',
       ),
     ]);
     root.append(grid);
@@ -35,11 +37,11 @@ export function mount(root, getResults) {
     }
   }
 
-  function stat(label, value, tone = 'zinc') {
+  function stat(label, value, tone = 'zinc', title) {
     const valueClass = tone === 'amber' ? 'bx-stat-value bx-stat-value-amber'
                      : tone === 'green' ? 'bx-stat-value bx-stat-value-green'
                      : 'bx-stat-value';
-    return el('div', { class: 'bx-stat' }, [
+    return el('div', { class: 'bx-stat', title: title || undefined }, [
       el('div', { class: 'bx-stat-label' }, label),
       el('div', { class: valueClass }, value),
     ]);
