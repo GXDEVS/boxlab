@@ -1,16 +1,5 @@
 import { el, clear, card, badge } from './components.js';
 
-const EXCLUSOES_TEXT = `🚫 O QUE O SEGURO NÃO COBRE:
-• Taxas alfandegárias, impostos ou multas governamentais
-• Apreensão alfandegária por falta de documentos (RCV, RCE, CNPJ)
-• Informações incompletas do destinatário (CPF/nome divergentes, endereço errado, nome incompleto)
-• Endereço incorreto fornecido pelo cliente
-• Declaração falsa ou itens ocultos
-• Itens frágeis sem proteção extra (ex: celular só com plástico bolha)
-• Pequenos amassados ou danos na embalagem externa
-• Itens restritos ou proibidos (drones, pirataria, etc.)
-• Custos de frete de devolução para DHL, UPS, FedEx ou Aramex`;
-
 export function mount(root, getFreightResult) {
   let collapsed = true;
 
@@ -44,11 +33,6 @@ export function mount(root, getFreightResult) {
       const list = collapsed ? null : el('div', { class: 'space-y-2 mt-2' }, incompatible.map(incompatibleRow));
       root.append(card(null, el('div', {}, [toggle, list])));
     }
-
-    root.append(card('Exclusões do seguro', el('pre', {
-      id: 'exclusoes',
-      class: 'whitespace-pre-wrap text-xs text-zinc-400 font-sans',
-    }, EXCLUSOES_TEXT)));
   }
 
   function freightCard(scored, isRecommended) {
