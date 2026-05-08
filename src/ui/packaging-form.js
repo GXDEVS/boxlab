@@ -130,8 +130,12 @@ export function mount(root, store, presetsPackaging) {
       el('label', { class: labelClass }, 'Camada de ar (folga interna)'),
       airSelect,
     ]),
+    el('div', { class: 'divider-dashed' }),
+    el('div', { class: 'space-y-2' }, [
+      el('label', { class: labelClass }, 'Opções de embalagem'),
+      optsRow,
+    ]),
   ])));
-  root.append(card('Opções de embalagem', optsRow));
 
   function applyPreset(id) {
     if (!id) return;
