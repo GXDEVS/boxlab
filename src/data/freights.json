@@ -1,0 +1,123 @@
+[
+  {
+    "id": "fj-br-exp-f-3-20",
+    "name": "FJ-BR-EXP-F",
+    "weightRange": { "min": 3, "max": 20 },
+    "insuranceMax": 5000,
+    "type": "express",
+    "priceTier": "medium",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": [] },
+    "notes": "Express padrão Brasil — 3 a 20kg"
+  },
+  {
+    "id": "bj-e-ems",
+    "name": "BJ-E-EMS",
+    "weightRange": { "min": 0, "max": 30 },
+    "insuranceMax": 5000,
+    "type": "ems",
+    "priceTier": "medium",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": [] },
+    "notes": "EMS — bom seguro, faixa ampla de peso"
+  },
+  {
+    "id": "tyg-br-exp-f",
+    "name": "TYG-BR-EXP-F",
+    "weightRange": { "min": 0, "max": 3 },
+    "insuranceMax": 4000,
+    "type": "express",
+    "priceTier": "medium",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": [] },
+    "notes": "Express até 3kg"
+  },
+  {
+    "id": "gz-br-f-b",
+    "name": "GZ-BR-F:B",
+    "weightRange": { "min": 0, "max": 20 },
+    "insuranceMax": 3500,
+    "type": "express",
+    "priceTier": "medium",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": [] },
+    "notes": "Express padrão"
+  },
+  {
+    "id": "jd-exp-ef",
+    "name": "JD-EXP-EF",
+    "weightRange": { "min": 0, "max": 3 },
+    "insuranceMax": 3000,
+    "type": "express",
+    "priceTier": "expensive",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": [] },
+    "notes": "Express premium até 3kg"
+  },
+  {
+    "id": "gz-br-f-p",
+    "name": "GZ-BR-F:P",
+    "weightRange": { "min": 0, "max": 30 },
+    "insuranceMax": 3000,
+    "type": "express",
+    "priceTier": "medium",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": [] },
+    "notes": "Express padrão até 30kg"
+  },
+  {
+    "id": "jd-battery",
+    "name": "JD Battery",
+    "weightRange": { "min": 0, "max": 12 },
+    "insuranceMax": 3000,
+    "type": "battery",
+    "priceTier": "expensive",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": ["battery"] },
+    "notes": "Único frete que aceita itens com bateria"
+  },
+  {
+    "id": "china-post-sal",
+    "name": "China Post SAL",
+    "weightRange": { "min": 0, "max": 30 },
+    "insuranceMax": 3000,
+    "type": "sal",
+    "priceTier": "cheap",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": ["battery", "liquid", "magnetic"], "requiresExtra": [] },
+    "notes": "Mais barato, mais lento"
+  },
+  {
+    "id": "china-post-sea-mail",
+    "name": "China Post Sea Mail",
+    "weightRange": { "min": 0, "max": 20 },
+    "insuranceMax": 3000,
+    "type": "seamail",
+    "priceTier": "cheap",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": ["battery", "liquid", "magnetic"], "requiresExtra": [] },
+    "notes": "Mais barato ainda, demora muito"
+  },
+  {
+    "id": "fj-br-exp-f-0-3",
+    "name": "FJ-BR-EXP-F (0-3kg)",
+    "weightRange": { "min": 0, "max": 3 },
+    "insuranceMax": 2000,
+    "type": "express",
+    "priceTier": "medium",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": [] },
+    "notes": "Mesma rota FJ, mas faixa pequena"
+  },
+  {
+    "id": "gz-br-f-e",
+    "name": "GZ-BR-F:E",
+    "weightRange": { "min": 0, "max": 2 },
+    "insuranceMax": 2000,
+    "type": "express",
+    "priceTier": "cheap",
+    "destinations": ["BR"],
+    "restrictions": { "forbidden": [], "requiresExtra": [] },
+    "notes": "Express básico até 2kg"
+  }
+]
