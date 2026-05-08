@@ -56,21 +56,23 @@ function itemRow(it, onRemove, onPatch) {
     onchange: (e) => onPatch({ bagged: e.target.checked }),
   });
 
-  return el('div', { class: 'bx-item-row' }, [
+  return el('div', {
+    class: 'flex items-center gap-3 p-2.5 rounded-box bg-base-300/50 border border-base-content/5 transition-colors hover:bg-base-300',
+  }, [
     el('span', {
-      class: 'bx-item-color',
-      style: { background: it.color, '--bx-color': it.color + '66' },
+      class: 'inline-block w-2.5 h-2.5 rounded shrink-0',
+      style: { background: it.color, boxShadow: `0 0 10px ${it.color}66` },
     }),
     el('div', { class: 'flex-1 min-w-0' }, [
       el('div', { class: 'text-sm font-medium truncate' }, it.name),
-      el('div', { class: 'text-xs text-white/50 tabular' },
+      el('div', { class: 'text-xs text-base-content/50 tabular' },
         `${fmt(it.length)}×${fmt(it.width)}×${fmt(it.height)} cm · ${it.weight} g`),
     ]),
-    el('label', { class: 'flex items-center gap-1.5 text-xs text-white/70 cursor-pointer select-none', title: 'Plástico bolha' }, [
+    el('label', { class: 'flex items-center gap-1.5 text-xs text-base-content/70 cursor-pointer select-none', title: 'Plástico bolha' }, [
       bubbleToggle,
       el('span', { class: 'text-base' }, '🫧'),
     ]),
-    el('label', { class: 'flex items-center gap-1.5 text-xs text-white/70 cursor-pointer select-none', title: 'Em saco plástico' }, [
+    el('label', { class: 'flex items-center gap-1.5 text-xs text-base-content/70 cursor-pointer select-none', title: 'Em saco plástico' }, [
       bagToggle,
       el('span', { class: 'text-base' }, '🛍️'),
     ]),
@@ -83,58 +85,60 @@ function fmt(n) {
 }
 
 function openAddModal(presets, onAdd) {
-  const overlay = el('div', { class: 'bx-overlay' });
-  const dialog = el('div', { class: 'bx-dialog space-y-4' });
+  // daisyUI modal as a div (avoids <dialog>'s quirky event/close behavior).
+  const dlg = el('div', { class: 'modal modal-open' });
+  const box = el('div', { class: 'modal-box max-w-lg space-y-4' });
+  dlg.append(box);
 
   let activeTab = 'presets';
-  const close = () => overlay.remove();
+  const close = () => dlg.remove();
+  // Esc key closes
+  const onKey = (e) => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+  document.addEventListener('keydown', onKey);
 
   function tabBtn(key, label) {
     return el('button', {
       type: 'button',
-      class: `bx-tab ${activeTab === key ? 'bx-tab-active' : ''}`,
+      role: 'tab',
+      class: `tab ${activeTab === key ? 'tab-active' : ''}`,
       onclick: () => { activeTab = key; renderBody(); },
     }, label);
   }
 
   function renderBody() {
-    clear(dialog);
-    dialog.append(el('div', { class: 'flex items-center justify-between' }, [
-      el('h2', { class: 'text-lg font-semibold flex items-center gap-2' }, [
-        el('span', { class: 'bx-logo-icon' }, '＋'),
-        'Adicionar item',
-      ]),
+    clear(box);
+    box.append(el('div', { class: 'flex items-center justify-between' }, [
+      el('h2', { class: 'text-lg font-semibold' }, '＋ Adicionar item'),
       button('×', close, 'icon'),
     ]));
 
-    dialog.append(el('div', { class: 'flex gap-2' }, [
+    box.append(el('div', { class: 'tabs tabs-bordered', role: 'tablist' }, [
       tabBtn('presets', 'Presets'),
       tabBtn('custom', 'Custom'),
     ]));
 
     if (activeTab === 'presets') {
-      dialog.append(el('div', { class: 'space-y-2' },
+      box.append(el('div', { class: 'space-y-2' },
         presets.map(p => el('button', {
           type: 'button',
-          class: 'bx-btn bx-btn-ghost w-full',
-          style: { justifyContent: 'space-between', padding: '0.7rem 0.95rem' },
+          class: 'btn btn-ghost w-full justify-between',
           onclick: () => { onAdd({ ...p }); close(); },
         }, [
           el('span', { class: 'text-left' }, p.name),
-          el('span', { class: 'text-xs text-white/50 tabular' },
+          el('span', { class: 'text-xs text-base-content/50 tabular' },
             `${fmt(p.length)}×${fmt(p.width)}×${fmt(p.height)} cm · ${p.weight}g`),
         ]))));
     } else {
       const inputs = {};
 
       function field(k, label, type = 'number', step = '0.1') {
-        const props = { name: k, type };
+        const props = { name: k, type, class: 'w-full' };
         if (step) props.step = step;
         if (type === 'number') props.min = '0';
         const i = input(props);
         inputs[k] = i;
-        return el('div', { class: 'space-y-1.5' }, [
-          el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, label),
+        return el('label', { class: 'form-control' }, [
+          el('span', { class: 'label-text text-xs uppercase tracking-wider text-base-content/60 mb-1' }, label),
           i,
         ]);
       }
@@ -145,7 +149,7 @@ function openAddModal(presets, onAdd) {
         return el('label', { class: 'flex items-center gap-2 text-sm cursor-pointer select-none' }, [c, el('span', {}, label)]);
       }
 
-      dialog.append(el('div', { class: 'space-y-4' }, [
+      box.append(el('div', { class: 'space-y-3' }, [
         field('name', 'Nome', 'text', null),
         el('div', { class: 'grid grid-cols-3 gap-2' }, [
           field('length', 'C (cm)'),
@@ -154,7 +158,7 @@ function openAddModal(presets, onAdd) {
         ]),
         field('weight', 'Peso (g)', 'number', '1'),
         el('div', { class: 'space-y-2 pt-1' }, [
-          el('div', { class: 'text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Flags'),
+          el('div', { class: 'text-xs uppercase tracking-wider text-base-content/60 font-medium' }, 'Flags'),
           el('div', { class: 'grid grid-cols-2 gap-2' }, [
             flagCheck('hasOriginalBox', 'Tem caixa original'),
             flagCheck('isSoft', 'É macio (soft)'),
@@ -187,8 +191,11 @@ function openAddModal(presets, onAdd) {
     }
   }
 
-  overlay.append(dialog);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  document.body.append(overlay);
+  document.body.append(dlg);
   renderBody();
+  // Click on backdrop closes — defer one tick so the click that opened this
+  // modal doesn't bubble straight into the close handler.
+  setTimeout(() => {
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+  }, 0);
 }

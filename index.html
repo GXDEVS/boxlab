@@ -1,16 +1,17 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR" data-theme="black">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BoxLab — Calculadora de Cubagem CSSBuy</title>
 
-    <!-- Inter font for clean numeric tabular UI -->
+    <!-- Inter font for clean numeric UI -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Tailwind v4 Play CDN -->
+    <!-- daisyUI v5 + Tailwind v4 (Play CDN, no build step) -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
     <!-- Importmap for ES module aliases (three) -->
@@ -24,331 +25,92 @@
     </script>
 
     <style>
-      :root {
-        --bg-0: #07080d;
-        --bg-1: #0c0f17;
-        --bg-2: #131826;
-        --line: #1f2533;
-        --accent: #34d399;        /* emerald-400 */
-        --accent-2: #22d3ee;      /* cyan-400 */
-        --warn: #f59e0b;
-        --bad: #f43f5e;
+      /* ── Theme override ──────────────────────────────────────
+         Classic black background with a solid green primary.
+         daisyUI uses OKLCH for theme variables. */
+      [data-theme="black"] {
+        --color-base-100: oklch(0% 0 0);              /* pure black */
+        --color-base-200: oklch(10% 0 0);             /* very dark gray */
+        --color-base-300: oklch(16% 0 0);
+        --color-base-content: oklch(96% 0 0);
+
+        --color-primary: oklch(74% 0.20 142);         /* solid green (green-500-ish) */
+        --color-primary-content: oklch(20% 0.05 142);
+
+        --color-secondary: oklch(70% 0.15 220);
+        --color-accent: oklch(74% 0.20 142);          /* same green as primary */
+
+        --color-success: oklch(74% 0.20 142);
+        --color-warning: oklch(80% 0.18 80);
+        --color-error: oklch(65% 0.25 30);
+        --color-info: oklch(70% 0.15 220);
       }
 
       html, body { height: 100%; }
       body {
-        background:
-          radial-gradient(1200px 600px at 80% -10%, rgba(52, 211, 153, 0.08), transparent 60%),
-          radial-gradient(900px 600px at -10% 110%, rgba(34, 211, 238, 0.06), transparent 60%),
-          var(--bg-0);
-        color: #e5e7eb;
+        background: #000;
+        color: oklch(96% 0 0);
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        font-feature-settings: 'cv11', 'ss01', 'ss03';
       }
 
-      /* Tabular numerals for any element with .tabular */
-      .tabular { font-variant-numeric: tabular-nums; }
-
-      /* ── 3D viewport ──────────────────────────────── */
+      /* ── 3D viewport ──────────────────────────────────────── */
       #three-viewport {
         width: 100%;
         aspect-ratio: 16 / 10;
-        background:
-          radial-gradient(circle at 50% 30%, rgba(52, 211, 153, 0.06), transparent 60%),
-          linear-gradient(180deg, #0a0e16 0%, #050810 100%);
-        border-radius: 1rem;
-        border: 1px solid rgba(52, 211, 153, 0.18);
-        box-shadow:
-          inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-          0 30px 60px -30px rgba(0, 0, 0, 0.6);
+        background: linear-gradient(180deg, #050505 0%, #000 100%);
+        border-radius: var(--radius-box);
+        border: 1px solid oklch(20% 0 0);
       }
 
-      /* ── Custom range slider ──────────────────────── */
-      .bx-range {
-        -webkit-appearance: none;
-        appearance: none;
-        height: 6px;
-        background: linear-gradient(90deg, var(--accent) var(--bx-fill, 50%), rgba(255,255,255,0.08) var(--bx-fill, 50%));
-        border-radius: 999px;
-        outline: none;
-        cursor: pointer;
-        transition: background-color 120ms ease;
-      }
-      .bx-range::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 18px;
-        height: 18px;
-        border-radius: 999px;
-        background: #fff;
-        border: 3px solid var(--accent);
-        box-shadow: 0 4px 12px -2px rgba(52, 211, 153, 0.5);
-        cursor: grab;
-        transition: transform 120ms ease, box-shadow 120ms ease;
-      }
-      .bx-range::-webkit-slider-thumb:hover { transform: scale(1.1); }
-      .bx-range::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.05); box-shadow: 0 6px 18px -2px rgba(52, 211, 153, 0.7); }
-      .bx-range::-moz-range-thumb {
-        width: 18px; height: 18px; border-radius: 999px;
-        background: #fff; border: 3px solid var(--accent);
-        box-shadow: 0 4px 12px -2px rgba(52, 211, 153, 0.5);
-        cursor: grab;
-      }
-
-      /* ── Custom checkbox ──────────────────────────── */
-      .bx-check {
-        appearance: none;
-        width: 18px; height: 18px;
-        border-radius: 5px;
-        border: 1.5px solid rgba(255, 255, 255, 0.18);
-        background: rgba(255, 255, 255, 0.04);
-        cursor: pointer;
-        position: relative;
-        transition: all 120ms ease;
-        flex-shrink: 0;
-      }
-      .bx-check:hover { border-color: var(--accent); }
-      .bx-check:checked {
-        background: linear-gradient(135deg, var(--accent), #10b981);
-        border-color: var(--accent);
-      }
-      .bx-check:checked::after {
-        content: '';
-        position: absolute;
-        left: 5px; top: 2px;
-        width: 5px; height: 9px;
-        border: solid #052017;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-      }
-
-      /* ── Inputs/select ────────────────────────────── */
-      .bx-input, .bx-select {
-        width: 100%;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 0.5rem;
-        padding: 0.55rem 0.75rem;
-        color: #e5e7eb;
-        font-size: 0.875rem;
-        outline: none;
-        transition: border-color 120ms ease, box-shadow 120ms ease;
-      }
-      .bx-input:hover, .bx-select:hover { border-color: rgba(52, 211, 153, 0.4); }
-      .bx-input:focus, .bx-select:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
-      }
-      .bx-select {
-        appearance: none;
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='none' stroke='%2334d399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M3 4.5l3 3 3-3'/></svg>");
-        background-repeat: no-repeat;
-        background-position: right 0.7rem center;
-        padding-right: 2rem;
-      }
-
-      /* ── Buttons ──────────────────────────────────── */
-      .bx-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.4rem;
-        padding: 0.55rem 0.95rem;
-        border-radius: 0.65rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        border: 1px solid transparent;
-        transition: all 150ms ease;
-        white-space: nowrap;
-      }
-      .bx-btn:active { transform: translateY(1px); }
-      .bx-btn-primary {
-        background: linear-gradient(135deg, var(--accent), #10b981);
-        color: #062017;
-        box-shadow: 0 8px 24px -8px rgba(52, 211, 153, 0.55);
-      }
-      .bx-btn-primary:hover { box-shadow: 0 10px 30px -8px rgba(52, 211, 153, 0.7); transform: translateY(-1px); }
-      .bx-btn-ghost {
-        background: rgba(255, 255, 255, 0.03);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: #e5e7eb;
-      }
-      .bx-btn-ghost:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(52, 211, 153, 0.4); }
-      .bx-btn-danger {
-        background: rgba(244, 63, 94, 0.1);
-        border-color: rgba(244, 63, 94, 0.3);
-        color: #fb7185;
-      }
-      .bx-btn-danger:hover { background: rgba(244, 63, 94, 0.18); border-color: rgba(244, 63, 94, 0.5); }
-      .bx-btn-icon {
-        width: 2rem; height: 2rem; padding: 0;
-        border-radius: 0.55rem;
-      }
-
-      /* ── Card ─────────────────────────────────────── */
-      .bx-card {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.005));
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 1rem;
-        padding: 1.1rem 1.2rem;
-        box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.04),
-          0 30px 60px -40px rgba(0, 0, 0, 0.5);
-        transition: border-color 200ms ease, box-shadow 200ms ease;
-      }
-      .bx-card:hover { border-color: rgba(52, 211, 153, 0.18); }
-      .bx-card-title {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: rgba(255, 255, 255, 0.5);
-        margin-bottom: 0.85rem;
-      }
-
-      /* ── Badge ────────────────────────────────────── */
-      .bx-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-size: 0.7rem;
-        padding: 0.15rem 0.55rem;
-        border-radius: 999px;
-        font-weight: 500;
-        font-variant-numeric: tabular-nums;
-      }
-      .bx-badge-zinc   { background: rgba(255,255,255,0.06); color: #d4d4d8; }
-      .bx-badge-green  { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; }
-      .bx-badge-red    { background: rgba(244, 63, 94, 0.12); color: #fda4af; }
-      .bx-badge-amber  { background: rgba(245, 158, 11, 0.12); color: #fcd34d; }
-      .bx-badge-blue   { background: rgba(59, 130, 246, 0.12); color: #93c5fd; }
-      .bx-badge-cyan   { background: rgba(34, 211, 238, 0.12); color: #67e8f9; }
-
-      /* ── Stat card ─────────────────────────────────── */
-      .bx-stat {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 0.75rem;
-        padding: 0.75rem 0.9rem;
-        transition: border-color 150ms ease;
-      }
-      .bx-stat:hover { border-color: rgba(255, 255, 255, 0.12); }
-      .bx-stat-label { font-size: 0.65rem; font-weight: 500; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em; }
-      .bx-stat-value { font-size: 1.35rem; font-weight: 600; line-height: 1.1; margin-top: 0.25rem; font-variant-numeric: tabular-nums; }
-      .bx-stat-value-amber { color: var(--warn); }
-      .bx-stat-value-green { color: var(--accent); }
-
-      /* ── Banner ────────────────────────────────────── */
-      .bx-banner {
-        border-radius: 0.75rem;
-        padding: 0.7rem 0.95rem;
-        font-size: 0.85rem;
-        border: 1px solid;
-      }
-      .bx-banner-green { background: rgba(16, 185, 129, 0.08); border-color: rgba(52, 211, 153, 0.25); color: #6ee7b7; }
-      .bx-banner-amber { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25); color: #fcd34d; }
-
-      /* ── Editable value pill ──────────────────────── */
-      .bx-pill {
+      /* ── Editable value pill (custom helper not in daisyUI) ── */
+      .pill {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         min-width: 3.4rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 0.45rem;
-        background: rgba(52, 211, 153, 0.08);
-        color: var(--accent);
+        padding: 0.2rem 0.55rem;
+        border-radius: var(--radius-field);
+        background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+        color: var(--color-primary);
         font-weight: 600;
         font-size: 0.85rem;
         font-variant-numeric: tabular-nums;
-        border: 1px solid rgba(52, 211, 153, 0.18);
+        border: 1px solid color-mix(in oklab, var(--color-primary) 25%, transparent);
         cursor: text;
         transition: all 120ms ease;
       }
-      .bx-pill:hover { background: rgba(52, 211, 153, 0.14); border-color: rgba(52, 211, 153, 0.35); }
+      .pill:hover {
+        background: color-mix(in oklab, var(--color-primary) 18%, transparent);
+        border-color: color-mix(in oklab, var(--color-primary) 40%, transparent);
+      }
 
-      /* ── Reset camera button ──────────────────────── */
-      #reset-camera {
-        position: absolute; top: 0.75rem; right: 0.75rem;
-        font-size: 0.7rem;
-        padding: 0.35rem 0.7rem;
-        border-radius: 0.5rem;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(6px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        color: #e5e7eb;
-        cursor: pointer;
-        transition: all 120ms ease;
+      /* daisyUI's range with primary-themed thumb already covers most needs;
+         tighten the height a bit and force solid (non-gradient) fill. */
+      input[type="range"].range {
+        --range-shdw: var(--color-primary);
       }
-      #reset-camera:hover { background: rgba(0, 0, 0, 0.7); border-color: var(--accent); color: var(--accent); }
 
-      /* ── Item row ──────────────────────────────────── */
-      .bx-item-row {
-        display: flex; align-items: center; gap: 0.8rem;
-        padding: 0.55rem 0.75rem;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 0.65rem;
-        transition: all 150ms ease;
-      }
-      .bx-item-row:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); }
-      .bx-item-color { width: 0.65rem; height: 0.65rem; border-radius: 0.2rem; flex-shrink: 0; box-shadow: 0 0 12px var(--bx-color); }
+      .tabular { font-variant-numeric: tabular-nums; }
 
-      /* ── Modal ─────────────────────────────────────── */
-      .bx-overlay {
-        position: fixed; inset: 0;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(8px);
-        z-index: 50;
-        display: flex; align-items: center; justify-content: center;
-        padding: 1rem;
-        animation: bx-fade-in 160ms ease;
+      /* Modal backdrop (works for both div.modal.modal-open and dialog.modal) */
+      .modal.modal-open,
+      dialog.modal[open] {
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(4px);
       }
-      @keyframes bx-fade-in { from { opacity: 0; } to { opacity: 1; } }
-      .bx-dialog {
-        background: linear-gradient(180deg, #131826, #0c0f17);
-        border: 1px solid rgba(52, 211, 153, 0.15);
-        border-radius: 1rem;
-        padding: 1.4rem;
-        width: 100%;
-        max-width: 32rem;
-        max-height: 85vh;
-        overflow-y: auto;
-        box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(52, 211, 153, 0.1);
-        animation: bx-zoom-in 180ms ease;
-      }
-      @keyframes bx-zoom-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-      .bx-tab {
-        background: transparent;
-        border: 1px solid transparent;
-        color: rgba(255,255,255,0.6);
-        padding: 0.45rem 0.95rem;
-        border-radius: 0.55rem;
-        font-size: 0.85rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 120ms ease;
-      }
-      .bx-tab:hover { color: #fff; background: rgba(255,255,255,0.04); }
-      .bx-tab-active { color: var(--accent); background: rgba(52, 211, 153, 0.08); border-color: rgba(52, 211, 153, 0.25); }
-
-      /* Logo gradient */
-      .bx-logo-icon {
-        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
+      dialog.modal::backdrop {
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(4px);
       }
     </style>
   </head>
   <body class="antialiased">
     <div id="app" class="min-h-screen p-4 lg:p-8 max-w-[1400px] mx-auto">
       <header class="mb-8 flex items-center gap-3">
-        <span class="bx-logo-icon text-2xl">▣</span>
+        <span class="text-2xl text-primary">▣</span>
         <div>
           <h1 class="text-xl font-bold tracking-tight">BoxLab</h1>
-          <p class="text-xs text-white/50">Calculadora 3D de cubagem · CSSBuy · Brasil</p>
+          <p class="text-xs text-base-content/60">Calculadora 3D de cubagem · CSSBuy · Brasil</p>
         </div>
       </header>
 
@@ -360,7 +122,7 @@
         <section id="preview-column" class="space-y-5">
           <div id="three-viewport-wrap" class="relative">
             <div id="three-viewport"></div>
-            <button id="reset-camera">Reset câmera</button>
+            <button id="reset-camera" class="btn btn-xs btn-ghost absolute top-3 right-3 backdrop-blur">Reset câmera</button>
           </div>
           <div id="results"></div>
         </section>

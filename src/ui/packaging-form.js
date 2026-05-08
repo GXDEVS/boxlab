@@ -27,18 +27,18 @@ export function mount(root, store, presetsPackaging) {
     box: presetsPackaging.filter(p => p.type === 'box'),
   };
 
-  // ── Type toggle (Bolsa | Caixa) ────────────────────────────
+  // ── Type toggle (Bolsa | Caixa) — daisyUI join with btn ────
   const typeButtons = {};
   function makeTypeBtn(typeKey, label) {
     const btn = el('button', {
       type: 'button',
-      class: 'bx-tab',
+      class: 'btn btn-sm join-item',
       onclick: () => onTypeChange(typeKey),
     }, label);
     typeButtons[typeKey] = btn;
     return btn;
   }
-  const typeToggle = el('div', { class: 'inline-flex gap-1 p-1 rounded-lg bg-white/[0.03] border border-white/5' }, [
+  const typeToggle = el('div', { class: 'join' }, [
     makeTypeBtn('bag', '🛍️ Bolsa'),
     makeTypeBtn('box', '📦 Caixa'),
   ]);
@@ -114,18 +114,20 @@ export function mount(root, store, presetsPackaging) {
   }
 
   // ── Mount static structure ───────────────────────────────
+  const labelClass = 'block text-xs uppercase tracking-wider text-base-content/60 font-medium';
+
   root.append(card('Embalagem', el('div', { class: 'space-y-4' }, [
     el('div', { class: 'space-y-1.5' }, [
-      el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Tipo'),
+      el('label', { class: labelClass }, 'Tipo'),
       typeToggle,
     ]),
     el('div', { class: 'space-y-1.5' }, [
-      el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Preset'),
+      el('label', { class: labelClass }, 'Preset'),
       presetSelect,
     ]),
     sliderRow,
     el('div', { class: 'space-y-1.5' }, [
-      el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Camada de ar (folga interna)'),
+      el('label', { class: labelClass }, 'Camada de ar (folga interna)'),
       airSelect,
     ]),
   ])));
@@ -145,9 +147,10 @@ export function mount(root, store, presetsPackaging) {
   function syncFromStore() {
     const s = store.get();
 
-    // Update type toggle visual state
+    // Update type toggle visual state — daisyUI uses btn-primary on active
     for (const k of ['bag', 'box']) {
-      typeButtons[k].classList.toggle('bx-tab-active', s.box.type === k);
+      const active = s.box.type === k;
+      typeButtons[k].classList.toggle('btn-primary', active);
     }
 
     // Rebuild preset options when type changes

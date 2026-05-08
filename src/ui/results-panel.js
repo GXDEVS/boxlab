@@ -5,50 +5,48 @@ export function mount(root, getResults) {
     clear(root);
     const r = getResults();
     if (!r) {
-      root.append(card('Resultado', el('p', { class: 'text-white/40 text-sm' }, 'Adicione itens pra começar.')));
+      root.append(card('Resultado', el('p', { class: 'text-base-content/40 text-sm' }, 'Adicione itens pra começar.')));
       return;
     }
     const { weights, packing } = r;
 
-    const grid = el('div', { class: 'grid grid-cols-2 lg:grid-cols-4 gap-2' }, [
+    const grid = el('div', { class: 'stats stats-horizontal w-full bg-base-200 border border-base-content/10 shadow-none' }, [
       stat('Volume da caixa', `${weights.volumeCm3.toLocaleString('pt-BR')} cm³`),
       stat('Peso real estimado', `${weights.realWeightG.toFixed(0)} g`),
       stat('Peso cubado (÷5000)', `${(weights.cubicWeightKg * 1000).toFixed(0)} g`,
-           'zinc', 'Estimativa com divisor padrão 5000. Cada frete pode usar divisor diferente.'),
+           '', 'Estimativa com divisor padrão 5000.'),
       stat(
         'Você paga por',
         `${(weights.chargedKg * 1000).toFixed(0)} g`,
-        weights.chargedSource === 'cubic' ? 'amber' : 'green',
-        'Mínimo entre os fretes compatíveis. Cada frete cobra de forma diferente — veja por card.',
+        weights.chargedSource === 'cubic' ? 'text-warning' : 'text-primary',
+        weights.chargedSource === 'cubic' ? 'Peso cubado prevalece.' : 'Peso real prevalece.',
       ),
     ]);
     root.append(grid);
 
     if (packing.tooManyItems) {
-      root.append(banner('amber', '⚠ Mais de 50 itens — packing 3D desativado por performance.'));
+      root.append(alertBox('warning', '⚠ Mais de 50 itens — packing 3D desativado por performance.'));
     } else if (packing.fits && packing.positions.length > 0) {
-      const msg = weights.chargedSource === 'real'
+      const isReal = weights.chargedSource === 'real';
+      const msg = isReal
         ? '✓ Cenário ideal — peso real prevalece, você paga pelo peso real.'
         : '⚠ Peso cubado prevalece — caixa folgada pra carga, considere reduzir.';
-      root.append(banner(weights.chargedSource === 'real' ? 'green' : 'amber', msg));
+      root.append(alertBox(isReal ? 'success' : 'warning', msg));
     } else if (packing.overflow.length > 0) {
       const overflowNames = packing.overflow.map(o => o.name || o.id).join(', ');
-      root.append(banner('amber', `⚠ Não couberam: ${overflowNames}. Aumente a caixa.`));
+      root.append(alertBox('warning', `⚠ Não couberam: ${overflowNames}. Aumente a caixa.`));
     }
   }
 
-  function stat(label, value, tone = 'zinc', title) {
-    const valueClass = tone === 'amber' ? 'bx-stat-value bx-stat-value-amber'
-                     : tone === 'green' ? 'bx-stat-value bx-stat-value-green'
-                     : 'bx-stat-value';
-    return el('div', { class: 'bx-stat', title: title || undefined }, [
-      el('div', { class: 'bx-stat-label' }, label),
-      el('div', { class: valueClass }, value),
+  function stat(label, value, valueClass = '', title) {
+    return el('div', { class: 'stat px-4 py-3', title: title || undefined }, [
+      el('div', { class: 'stat-title text-xs uppercase tracking-wider' }, label),
+      el('div', { class: `stat-value text-2xl tabular ${valueClass}` }, value),
     ]);
   }
 
-  function banner(tone, text) {
-    return el('div', { class: `bx-banner bx-banner-${tone}` }, text);
+  function alertBox(tone, text) {
+    return el('div', { class: `alert alert-${tone} alert-soft` }, text);
   }
 
   render();

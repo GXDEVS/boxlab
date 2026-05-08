@@ -1,5 +1,4 @@
-// DOM helpers built on the bx-* class system in index.html.
-// Pure Tailwind v4 (Play CDN) — no third-party plugin dependencies.
+// DOM helpers thin-wrapping daisyUI v5 component classes.
 
 export function el(tag, props = {}, children = []) {
   const node = document.createElement(tag);
@@ -23,32 +22,33 @@ export function clear(node) {
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
-// Card with optional title — title sits at top, body below.
+// daisyUI card with a title + body.
 export function card(title, body) {
-  const children = [];
-  if (title) children.push(el('h3', { class: 'bx-card-title' }, title));
-  children.push(body instanceof Node ? body : el('div', {}, body));
-  return el('div', { class: 'bx-card' }, children);
+  const inner = el('div', { class: 'card-body p-4 gap-3' });
+  if (title) inner.append(el('h3', { class: 'card-title text-xs font-semibold uppercase tracking-wider text-base-content/60' }, title));
+  inner.append(body instanceof Node ? body : el('div', {}, body));
+  return el('div', { class: 'card bg-base-200 border border-base-content/10' }, inner);
 }
 
 const BADGE_TONE = {
-  zinc: 'bx-badge-zinc',
-  green: 'bx-badge-green',
-  red: 'bx-badge-red',
-  amber: 'bx-badge-amber',
-  blue: 'bx-badge-blue',
-  cyan: 'bx-badge-cyan',
+  zinc: 'badge-soft',
+  green: 'badge-success badge-soft',
+  red: 'badge-error badge-soft',
+  amber: 'badge-warning badge-soft',
+  blue: 'badge-info badge-soft',
+  cyan: 'badge-info badge-soft',
+  primary: 'badge-primary',
 };
 
 export function badge(text, tone = 'zinc') {
-  return el('span', { class: `bx-badge ${BADGE_TONE[tone] ?? BADGE_TONE.zinc}` }, text);
+  return el('span', { class: `badge badge-sm ${BADGE_TONE[tone] ?? BADGE_TONE.zinc}` }, text);
 }
 
 const BUTTON_VARIANT = {
-  primary: 'bx-btn bx-btn-primary',
-  ghost: 'bx-btn bx-btn-ghost',
-  danger: 'bx-btn bx-btn-danger',
-  icon: 'bx-btn bx-btn-ghost bx-btn-icon',
+  primary: 'btn btn-primary',
+  ghost: 'btn btn-ghost',
+  danger: 'btn btn-error btn-soft',
+  icon: 'btn btn-ghost btn-square btn-sm',
 };
 
 export function button(label, onClick, variant = 'primary', extraClass = '') {
@@ -62,46 +62,44 @@ export function button(label, onClick, variant = 'primary', extraClass = '') {
 // Form primitives ───────────────────────────────────────────
 
 export function input(props = {}) {
-  return el('input', { ...props, class: `bx-input ${props.class ?? ''}`.trim() });
+  return el('input', { ...props, class: `input ${props.class ?? ''}`.trim() });
 }
 
 export function select(props = {}, children = []) {
-  return el('select', { ...props, class: `bx-select ${props.class ?? ''}`.trim() }, children);
+  return el('select', { ...props, class: `select ${props.class ?? ''}`.trim() }, children);
 }
 
 export function checkbox(props = {}) {
-  return el('input', { type: 'checkbox', ...props, class: `bx-check ${props.class ?? ''}`.trim() });
+  return el('input', { type: 'checkbox', ...props, class: `checkbox checkbox-primary checkbox-sm ${props.class ?? ''}`.trim() });
 }
 
-// Range with editable value — clicking the value pill turns it into a number input.
-// On Enter/blur it commits, on Escape it cancels. Range and pill stay in sync.
+// Range with editable value pill.
+// Click the value to turn it into a number input. Enter/blur commits.
+// daisyUI already styles `range range-primary range-sm` for us.
 export function rangeWithEditableValue({ min = 1, max = 100, step = 1, value = 1, label = '', onChange }) {
   const valuePill = el('button', {
     type: 'button',
-    class: 'bx-pill',
+    class: 'pill',
     title: 'Clique pra digitar',
   }, String(value));
 
   const rangeInput = el('input', {
     type: 'range',
     min: String(min), max: String(max), step: String(step), value: String(value),
-    class: 'bx-range w-full',
+    class: 'range range-primary range-sm w-full',
     'aria-label': label,
   });
-  setRangeFill(rangeInput, value, min, max);
 
   rangeInput.addEventListener('input', () => {
     const v = parseFloat(rangeInput.value);
     valuePill.textContent = String(v);
-    setRangeFill(rangeInput, v, min, max);
     onChange?.(v);
   });
 
   let editing = false;
   const numInput = el('input', {
     type: 'number', min: String(min), max: String(max), step: String(step),
-    class: 'bx-input w-20 text-center tabular',
-    style: { padding: '0.25rem 0.4rem', fontSize: '0.85rem', minWidth: '3.4rem' },
+    class: 'input input-sm w-20 text-center tabular',
   });
 
   function commit() {
@@ -111,7 +109,6 @@ export function rangeWithEditableValue({ min = 1, max = 100, step = 1, value = 1
     v = Math.max(min, Math.min(max, v));
     rangeInput.value = String(v);
     valuePill.textContent = String(v);
-    setRangeFill(rangeInput, v, min, max);
     if (numInput.parentNode) numInput.parentNode.replaceChild(valuePill, numInput);
     editing = false;
     onChange?.(v);
@@ -135,7 +132,7 @@ export function rangeWithEditableValue({ min = 1, max = 100, step = 1, value = 1
   });
   numInput.addEventListener('blur', commit);
 
-  const labelRow = el('div', { class: 'flex justify-between items-center text-xs text-white/60' }, [
+  const labelRow = el('div', { class: 'flex justify-between items-center text-xs text-base-content/70' }, [
     el('span', {}, label),
     valuePill,
   ]);
@@ -147,14 +144,7 @@ export function rangeWithEditableValue({ min = 1, max = 100, step = 1, value = 1
     setValue(v) {
       rangeInput.value = String(v);
       valuePill.textContent = String(v);
-      setRangeFill(rangeInput, v, min, max);
       if (editing) numInput.value = String(v);
     },
   };
-}
-
-// Update the gradient fill of a custom range to reflect current value.
-function setRangeFill(rangeInput, value, min, max) {
-  const pct = ((value - min) / (max - min)) * 100;
-  rangeInput.style.setProperty('--bx-fill', `${pct}%`);
 }
