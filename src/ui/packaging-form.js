@@ -116,7 +116,28 @@ export function mount(root, store, presetsPackaging) {
   // ── Mount static structure ───────────────────────────────
   const labelClass = 'block text-xs uppercase tracking-wider text-base-content/60 font-medium';
 
-  root.append(card('Embalagem', el('div', { class: 'space-y-4' }, [
+  // ── Ship mode toggle (external container vs original product box) ─────
+  const shipModeButtons = {};
+  function makeShipBtn(mode, label, hint) {
+    const btn = el('button', {
+      type: 'button',
+      class: 'btn btn-sm join-item flex-1',
+      title: hint,
+      onclick: () => store.update({
+        packagingOptions: { ...store.get().packagingOptions, shipMode: mode },
+      }),
+    }, label);
+    shipModeButtons[mode] = btn;
+    return btn;
+  }
+  const shipModeToggle = el('div', { class: 'join w-full' }, [
+    makeShipBtn('external', '📦 Com caixa externa', 'Você define o container — bolsa ou caixa.'),
+    makeShipBtn('original', '✓ Caixa original', 'Sem caixa externa — usa a caixa do próprio produto.'),
+  ]);
+
+  // The container settings (Tipo, Preset, sliders, air layer) only make sense
+  // in 'external' mode. We keep them in a wrapper so we can toggle visibility.
+  const containerBlock = el('div', { class: 'space-y-4' }, [
     el('div', { class: 'space-y-1.5' }, [
       el('label', { class: labelClass }, 'Tipo'),
       typeToggle,
@@ -130,6 +151,22 @@ export function mount(root, store, presetsPackaging) {
       el('label', { class: labelClass }, 'Camada de ar (folga interna)'),
       airSelect,
     ]),
+  ]);
+
+  const originalModeHint = el('div', {
+    class: 'alert alert-info alert-soft text-xs',
+  }, [
+    el('iconify-icon', { icon: 'ph:info-bold', width: '16' }),
+    el('span', {}, 'Volume e peso usam direto a caixa do produto (com bolha/saco se aplicado). Bom para itens com caixa de transporte robusta.'),
+  ]);
+
+  root.append(card('Embalagem', el('div', { class: 'space-y-4' }, [
+    el('div', { class: 'space-y-1.5' }, [
+      el('label', { class: labelClass }, 'Modo de envio'),
+      shipModeToggle,
+    ]),
+    containerBlock,
+    originalModeHint,
     el('div', { class: 'divider-dashed' }),
     el('div', { class: 'space-y-2' }, [
       el('label', { class: labelClass }, 'Opções de embalagem'),
@@ -156,6 +193,14 @@ export function mount(root, store, presetsPackaging) {
       const active = s.box.type === k;
       typeButtons[k].classList.toggle('btn-primary', active);
     }
+
+    // Ship mode toggle — show container settings only in 'external' mode
+    const mode = s.packagingOptions.shipMode ?? 'external';
+    for (const k of ['external', 'original']) {
+      shipModeButtons[k].classList.toggle('btn-primary', mode === k);
+    }
+    containerBlock.style.display = mode === 'external' ? '' : 'none';
+    originalModeHint.style.display = mode === 'original' ? '' : 'none';
 
     // Rebuild preset options when type changes
     if (s.box.type !== lastTypeRendered) {
