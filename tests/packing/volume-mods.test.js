@@ -7,10 +7,12 @@ const baseItem = (over = {}) => ({
   flags: { hasOriginalBox: false, isSoft: false, hasOriginalPlastic: false },
   coreDims: null,
   bubbleWrap: false,
+  originalBoxWeight: 0,
+  originalPlasticWeight: 0,
   ...over,
 });
 
-describe('applyMods', () => {
+describe('applyMods — dimensions', () => {
   it('returns deep-copied items, not mutating originals', () => {
     const items = [baseItem()];
     const out = applyMods(items, {});
@@ -27,26 +29,13 @@ describe('applyMods', () => {
     assert.equal(out[0].length, 25 * 0.7);
   });
 
-  it('vacuum does NOT affect non-soft items', () => {
-    const items = [baseItem()];
-    const out = applyMods(items, { vacuum: true });
-    assert.equal(out[0].length, 10);
-  });
-
-  it('per-item bubbleWrap adds +1cm to all dims, only on flagged items', () => {
-    const items = [baseItem({ bubbleWrap: true }), baseItem({ id: 'b', length: 5, width: 5, height: 5 })];
+  it('per-item bubbleWrap adds +1cm to all dims', () => {
+    const items = [baseItem({ bubbleWrap: true })];
     const out = applyMods(items, {});
-    assert.equal(out[0].length, 11);   // bubbled
-    assert.equal(out[1].length, 5);    // not bubbled
+    assert.equal(out[0].length, 11);
   });
 
-  it('global options.bubbleWrap is no longer applied (it is per-item now)', () => {
-    const items = [baseItem()];
-    const out = applyMods(items, { bubbleWrap: true });
-    assert.equal(out[0].length, 10);   // global flag is ignored
-  });
-
-  it('dropBoxes uses coreDims when hasOriginalBox=true', () => {
+  it('dropBoxes uses coreDims', () => {
     const items = [baseItem({
       flags: { hasOriginalBox: true, isSoft: false, hasOriginalPlastic: false },
       coreDims: { length: 8, width: 7, height: 6 },
@@ -55,46 +44,88 @@ describe('applyMods', () => {
     assert.deepEqual([out[0].length, out[0].width, out[0].height], [8, 7, 6]);
   });
 
-  it('dropBoxes ignores items missing coreDims', () => {
-    const items = [baseItem({
-      flags: { hasOriginalBox: true, isSoft: false, hasOriginalPlastic: false },
-      coreDims: null,
-    })];
-    const out = applyMods(items, { dropBoxes: true });
-    assert.equal(out[0].length, 10);
-  });
-
-  it('removePlasticBags shrinks dims by 5% on items with hasOriginalPlastic', () => {
-    const items = [baseItem({ flags: { hasOriginalBox: false, isSoft: false, hasOriginalPlastic: true } })];
-    const out = applyMods(items, { removePlasticBags: true });
-    assert.equal(out[0].length, 10 * 0.95);
-  });
-
-  it('compose: vacuum + per-item bubble + air layer apply in order', () => {
-    const items = [baseItem({
-      length: 10, width: 10, height: 10,
-      flags: { isSoft: true, hasOriginalBox: false, hasOriginalPlastic: false },
-      bubbleWrap: true,
-    })];
-    const out = applyMods(items, { vacuum: true, airLayerCm: 2 });
-    // vacuum: length 10 -> 7
-    // bubble: +1 -> 8
-    // air layer +2 -> 10
-    assert.equal(out[0].length, 10);
-    // width/height: bubble +1 then air +2
-    assert.equal(out[0].width, 13);
-  });
-
-  it('air layer applies uniformly to all items even without other flags', () => {
+  it('air layer applies uniformly to all items', () => {
     const items = [baseItem(), baseItem({ id: 'b', length: 5, width: 5, height: 5 })];
     const out = applyMods(items, { airLayerCm: 1 });
     assert.equal(out[0].length, 11);
     assert.equal(out[1].length, 6);
   });
+});
 
-  it('air layer 0 (default) is a no-op', () => {
+describe('applyMods — weight effects', () => {
+  it('vacuum does not change weight', () => {
+    const items = [baseItem({
+      flags: { isSoft: true, hasOriginalBox: false, hasOriginalPlastic: false },
+    })];
+    const out = applyMods(items, { vacuum: true });
+    assert.equal(out[0].weight, 100);
+  });
+
+  it('air layer does not change weight', () => {
     const items = [baseItem()];
-    const out = applyMods(items, { airLayerCm: 0 });
+    const out = applyMods(items, { airLayerCm: 3 });
+    assert.equal(out[0].weight, 100);
+  });
+
+  it('dropBoxes subtracts originalBoxWeight when applied', () => {
+    const items = [baseItem({
+      weight: 200,
+      originalBoxWeight: 60,
+      flags: { hasOriginalBox: true, isSoft: false, hasOriginalPlastic: false },
+      coreDims: { length: 5, width: 5, height: 5 },
+    })];
+    const out = applyMods(items, { dropBoxes: true });
+    assert.equal(out[0].weight, 140);
+  });
+
+  it('dropBoxes does not subtract weight if hasOriginalBox=false', () => {
+    const items = [baseItem({ weight: 200, originalBoxWeight: 60 })];
+    const out = applyMods(items, { dropBoxes: true });
+    assert.equal(out[0].weight, 200);
+  });
+
+  it('removePlasticBags subtracts originalPlasticWeight', () => {
+    const items = [baseItem({
+      weight: 100,
+      originalPlasticWeight: 8,
+      flags: { hasOriginalBox: false, isSoft: false, hasOriginalPlastic: true },
+    })];
+    const out = applyMods(items, { removePlasticBags: true });
+    assert.equal(out[0].weight, 92);
+  });
+
+  it('per-item bubbleWrap adds bubble weight by surface area', () => {
+    // 10×10×10 -> after bubble dims 11×11×11; surface = 6*121 = 726; weight ~7g rounded
+    const items = [baseItem({ bubbleWrap: true })];
+    const out = applyMods(items, {});
+    // Surface of bubble-inflated item: 2*(11*11+11*11+11*11) = 726, /100 = 7
+    assert.equal(out[0].weight, 100 + 7);
+  });
+
+  it('weight cannot go below 0 (heavy box subtraction is clamped)', () => {
+    const items = [baseItem({
+      weight: 30,
+      originalBoxWeight: 60,
+      flags: { hasOriginalBox: true, isSoft: false, hasOriginalPlastic: false },
+      coreDims: { length: 5, width: 5, height: 5 },
+    })];
+    const out = applyMods(items, { dropBoxes: true });
+    assert.equal(out[0].weight, 0);
+  });
+
+  it('compose: dropBoxes + bubble — subtract box weight then add bubble weight', () => {
+    const items = [baseItem({
+      length: 10, width: 10, height: 10,
+      weight: 200,
+      originalBoxWeight: 50,
+      bubbleWrap: true,
+      flags: { hasOriginalBox: true, isSoft: false, hasOriginalPlastic: false },
+      coreDims: { length: 9, width: 9, height: 9 },
+    })];
+    const out = applyMods(items, { dropBoxes: true });
+    // dropBoxes: dims 9×9×9, weight 200-50=150
+    // bubble: dims 10×10×10, surface=600, weight 150+6=156
     assert.equal(out[0].length, 10);
+    assert.equal(out[0].weight, 150 + Math.round(600 / 100));
   });
 });

@@ -2,6 +2,7 @@ import { chargedKgFor } from './weight.js';
 
 const W = { insurance: 0.40, price: 0.20, type: 0.15, headroom: 0.15, transit: 0.10 };
 const PRICE_SCORE = { cheap: 1.0, medium: 0.66, expensive: 0.33 };
+const PRICE_RANK  = { cheap: 0, medium: 1, expensive: 2 };
 const TYPE_SCORE  = {
   express: 1.0, ems: 0.85, battery: 0.7, eub: 0.7,
   'duty-free': 0.6, sal: 0.55, seamail: 0.4,
@@ -13,6 +14,10 @@ const COMMODITY_LABELS = {
   cosmetics: 'Cosmetics', magnetic: 'Magnetic', watch: 'Watch', perfume: 'Perfume',
   seafreight: 'Sea freight', electronics: 'Electronic Products',
 };
+
+// Insurance below this (¥) is flagged on the recommended card so the user can
+// decide whether to pay extra insurance for valuable cargo.
+export const LOW_INSURANCE_THRESHOLD = 3000;
 
 export function scoreFreights({ weights, commodityAttrs = [], country = 'BR' }, freights) {
   const compatible = [];
@@ -49,8 +54,37 @@ export function scoreFreights({ weights, commodityAttrs = [], country = 'BR' }, 
     }
   }
 
-  compatible.sort((a, b) => b.score - a.score);
-  return { recommended: compatible[0] ?? null, compatible, incompatible };
+  // Recommendation strategy: cheapest first.
+  // Tiebreakers within same priceTier: faster transit, then bigger insurance.
+  // We keep the score breakdown around for the UI's informational bars.
+  compatible.sort(byEconomy);
+
+  const recommended = compatible[0] ?? null;
+  const lowInsurance = recommended && recommended.freight.insuranceMax < LOW_INSURANCE_THRESHOLD;
+
+  return {
+    recommended,
+    compatible,
+    incompatible,
+    lowInsuranceAlert: lowInsurance
+      ? {
+          insuranceMax: recommended.freight.insuranceMax,
+          threshold: LOW_INSURANCE_THRESHOLD,
+        }
+      : null,
+  };
+}
+
+function byEconomy(a, b) {
+  const aPrice = PRICE_RANK[a.freight.priceTier] ?? 99;
+  const bPrice = PRICE_RANK[b.freight.priceTier] ?? 99;
+  if (aPrice !== bPrice) return aPrice - bPrice;            // cheap < medium < expensive
+
+  const aTr = (a.freight.transitDays.min + a.freight.transitDays.max) / 2;
+  const bTr = (b.freight.transitDays.min + b.freight.transitDays.max) / 2;
+  if (aTr !== bTr) return aTr - bTr;                        // faster wins
+
+  return b.freight.insuranceMax - a.freight.insuranceMax;   // more insurance wins
 }
 
 function headroomScore(charged, range) {

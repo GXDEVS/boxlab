@@ -57,7 +57,9 @@ function recompute() {
     p.color = orig?.color || '#3b82f6';
     p.name = orig?.name;
   }
-  const weights = calcWeights(s.items, s.box);
+  // calcWeights uses effective items so the "Peso real estimado" stat reflects
+  // dropBoxes / removePlasticBags / bubbleWrap weight effects.
+  const weights = calcWeights(effective, s.box);
   const freight = scoreFreights({
     weights,
     commodityAttrs: s.commodityAttrs ?? [],

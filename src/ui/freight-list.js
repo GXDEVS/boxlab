@@ -10,7 +10,7 @@ export function mount(root, getFreightResult) {
       root.append(card('Frete', el('p', { class: 'text-white/40 text-sm' }, 'Aguardando dados.')));
       return;
     }
-    const { recommended, compatible, incompatible } = r;
+    const { recommended, compatible, incompatible, lowInsuranceAlert } = r;
 
     // Banner: when ≥50% of catalog is filtered out, name the top culprit commodity.
     const total = compatible.length + incompatible.length;
@@ -31,7 +31,13 @@ export function mount(root, getFreightResult) {
     }
 
     if (recommended) {
-      root.append(card('★ Frete recomendado', recommendedCard(recommended)));
+      const body = el('div', { class: 'space-y-3' }, [recommendedCard(recommended)]);
+      if (lowInsuranceAlert) {
+        body.append(el('div', {
+          class: 'bx-banner bx-banner-amber text-xs',
+        }, `⚠ Seguro deste frete é apenas ¥${lowInsuranceAlert.insuranceMax}. Se a carga for valiosa (>¥${lowInsuranceAlert.threshold}), considere comprar seguro extra na CSSBuy.`));
+      }
+      root.append(card('★ Mais econômico', body));
     } else {
       root.append(card('Frete', el('p', { class: 'text-amber-400 text-sm' },
         'Nenhum frete compatível com peso/restrições atuais.')));

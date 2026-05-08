@@ -8,6 +8,8 @@
     "weight": 200,
     "flags": { "hasOriginalBox": true, "isSoft": false, "hasOriginalPlastic": true },
     "coreDims": { "length": 12, "width": 3.5, "height": 3 },
+    "originalBoxWeight": 60,
+    "originalPlasticWeight": 6,
     "bubbleWrap": true
   },
   {
@@ -19,6 +21,8 @@
     "weight": 80,
     "flags": { "hasOriginalBox": true, "isSoft": false, "hasOriginalPlastic": false },
     "coreDims": { "length": 6, "width": 4, "height": 3 },
+    "originalBoxWeight": 25,
+    "originalPlasticWeight": 0,
     "bubbleWrap": false
   },
   {
@@ -30,6 +34,8 @@
     "weight": 200,
     "flags": { "hasOriginalBox": false, "isSoft": true, "hasOriginalPlastic": true },
     "coreDims": null,
+    "originalBoxWeight": 0,
+    "originalPlasticWeight": 8,
     "bubbleWrap": false
   },
   {
@@ -41,6 +47,8 @@
     "weight": 350,
     "flags": { "hasOriginalBox": true, "isSoft": false, "hasOriginalPlastic": true },
     "coreDims": { "length": 14.7, "width": 7.2, "height": 0.8 },
+    "originalBoxWeight": 90,
+    "originalPlasticWeight": 5,
     "bubbleWrap": true
   },
   {
@@ -52,6 +60,8 @@
     "weight": 400,
     "flags": { "hasOriginalBox": true, "isSoft": false, "hasOriginalPlastic": false },
     "coreDims": { "length": 8, "width": 4, "height": 13 },
+    "originalBoxWeight": 35,
+    "originalPlasticWeight": 0,
     "bubbleWrap": true
   }
 ]

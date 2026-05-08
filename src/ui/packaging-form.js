@@ -27,23 +27,61 @@ const AIR_LAYER_OPTIONS = [
   { value: 3, label: '+3 cm (bem folgado)' },
 ];
 
-// Build DOM once on mount; subscribe to store and update properties in place.
-// This avoids losing the slider drag gesture when state changes.
 export function mount(root, store, presetsPackaging) {
   clear(root);
 
-  // ── Preset select ──────────────────────────────────────────
+  const presetsByType = {
+    bag: presetsPackaging.filter(p => p.type === 'bag'),
+    box: presetsPackaging.filter(p => p.type === 'box'),
+  };
+
+  // ── Type toggle (Bolsa | Caixa) ────────────────────────────
+  const typeButtons = {};
+  function makeTypeBtn(typeKey, label) {
+    const btn = el('button', {
+      type: 'button',
+      class: 'bx-tab',
+      onclick: () => onTypeChange(typeKey),
+    }, label);
+    typeButtons[typeKey] = btn;
+    return btn;
+  }
+  const typeToggle = el('div', { class: 'inline-flex gap-1 p-1 rounded-lg bg-white/[0.03] border border-white/5' }, [
+    makeTypeBtn('bag', '🛍️ Bolsa'),
+    makeTypeBtn('box', '📦 Caixa'),
+  ]);
+
+  function onTypeChange(typeKey) {
+    const s = store.get();
+    if (s.box.type === typeKey) return;
+    // Reset to first preset of the new type so the UI feels coherent
+    const first = presetsByType[typeKey][0];
+    if (first) {
+      store.update({
+        box: {
+          length: first.length, width: first.width, height: first.height,
+          type: first.type, presetId: first.id,
+        },
+      });
+    } else {
+      store.update({ box: { ...s.box, type: typeKey, presetId: null } });
+    }
+  }
+
+  // ── Preset select (filtered by current type) ───────────────
   const presetSelect = select({
     onchange: (e) => applyPreset(e.target.value),
-  }, [
-    el('option', { value: '' }, '— custom (use sliders) —'),
-    ...presetsPackaging.map((p) => {
-      const typeLabel = p.type === 'bag' ? 'Bolsa' : 'Caixa';
+  });
+
+  function rebuildPresetOptions(typeKey) {
+    clear(presetSelect);
+    presetSelect.append(el('option', { value: '' }, '— custom (use sliders) —'));
+    for (const p of presetsByType[typeKey]) {
       const cleanName = p.name.replace(/^(Bolsa|Caixa)\s*/, '');
-      return el('option', { value: p.id },
-        `${typeLabel} ${cleanName} — ${p.length}×${p.width}×${p.height} cm`);
-    }),
-  ]);
+      presetSelect.append(el('option', { value: p.id },
+        `${cleanName} — ${p.length}×${p.width}×${p.height} cm`));
+    }
+  }
 
   // ── Sliders editáveis ─────────────────────────────────────
   const sliders = {};
@@ -101,6 +139,10 @@ export function mount(root, store, presetsPackaging) {
   // ── Mount static structure ───────────────────────────────
   root.append(card('Embalagem', el('div', { class: 'space-y-4' }, [
     el('div', { class: 'space-y-1.5' }, [
+      el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Tipo'),
+      typeToggle,
+    ]),
+    el('div', { class: 'space-y-1.5' }, [
       el('label', { class: 'block text-xs uppercase tracking-wide text-white/50 font-medium' }, 'Preset'),
       presetSelect,
     ]),
@@ -123,8 +165,20 @@ export function mount(root, store, presetsPackaging) {
   }
 
   // ── Sync DOM state from store (in place, no rebuild) ─────
+  let lastTypeRendered = null;
   function syncFromStore() {
     const s = store.get();
+
+    // Update type toggle visual state
+    for (const k of ['bag', 'box']) {
+      typeButtons[k].classList.toggle('bx-tab-active', s.box.type === k);
+    }
+
+    // Rebuild preset options when type changes
+    if (s.box.type !== lastTypeRendered) {
+      rebuildPresetOptions(s.box.type);
+      lastTypeRendered = s.box.type;
+    }
 
     const desired = s.box.presetId ?? '';
     if (presetSelect.value !== desired) presetSelect.value = desired;
