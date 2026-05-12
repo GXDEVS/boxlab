@@ -46,11 +46,15 @@ function recompute() {
   const s = store.get();
   const effective = applyMods(s.items, s.packagingOptions);
   const isOriginalMode = s.packagingOptions.shipMode === 'original';
+  // Plastic bags conform to contents — in 'external' mode with a bag and
+  // auto-fit on, the bag dims = bbox of items, just like 'original' mode but
+  // we still render the outer wireframe.
+  const isBagAutoFit = !isOriginalMode
+    && s.box.type === 'bag'
+    && (s.packagingOptions.bagAutoFit ?? true);
 
-  // In 'original' mode the items ARE the package — compute the bbox they
-  // naturally occupy and use that as the box. No outer wrapper is rendered.
   let box, packing;
-  if (isOriginalMode) {
+  if (isOriginalMode || isBagAutoFit) {
     const bbox = bboxOfItems(effective);
     box = { length: bbox.length, width: bbox.width, height: bbox.height, type: s.box.type, presetId: null };
     packing = {
@@ -74,7 +78,10 @@ function recompute() {
   // dropBoxes and removePlasticBags weight effects.
   const weights = calcWeights(effective, box);
 
-  currentResults = { weights, packing, isOriginalMode };
+  currentResults = {
+    weights, packing, isOriginalMode,
+    freightLimitG: s.packagingOptions.freightLimitG || 0,
+  };
   log('recompute', { weights, packing, isOriginalMode });
 
   results.rerender();

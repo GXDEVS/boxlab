@@ -11,6 +11,8 @@ const DEFAULT_STATE = {
     removePlasticBags: false,
     airLayerCm: 0,   // espaço de "ar" entre itens e paredes da caixa
     shipMode: 'external',  // 'external' = caixa/bolsa por fora; 'original' = sem caixa externa, usa a caixa do produto
+    freightLimitG: 0,  // limite de peso (g) do frete CSSBuy escolhido. 0 = sem limite. Acima do limite, mostra aviso de que o seguro não cobre.
+    bagAutoFit: true,  // bolsa plástica se molda aos itens — dims = bbox dos itens. Off = sliders manuais.
   },
   commodityAttrs: [],
   customItems: [],
@@ -54,7 +56,18 @@ function restore(storage) {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed.version !== SCHEMA_VERSION) return null;
-    return { ...structuredClone(DEFAULT_STATE), ...pick(parsed, PERSIST_FIELDS) };
+    const base = structuredClone(DEFAULT_STATE);
+    const picked = pick(parsed, PERSIST_FIELDS);
+    // Shallow-merge nested objects so new fields added to DEFAULT_STATE
+    // (e.g. packagingOptions.freightLimitG) keep their defaults when older
+    // persisted blobs don't include them.
+    if (picked.packagingOptions) {
+      picked.packagingOptions = { ...base.packagingOptions, ...picked.packagingOptions };
+    }
+    if (picked.box) {
+      picked.box = { ...base.box, ...picked.box };
+    }
+    return { ...base, ...picked };
   } catch {
     return null;
   }

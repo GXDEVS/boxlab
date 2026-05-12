@@ -16,7 +16,13 @@ export function mount(root, store, presetsItems) {
         : items.map((it) => itemRow(it, () => removeItem(it.id), (next) => updateItem(it.id, next))),
     );
 
-    const addBtn = button('+ Adicionar item', () => openAddModal(presetsItems, addItem));
+    const addBtn = button('+ Adicionar item', () => openAddModal({
+      factoryPresets: presetsItems,
+      getCustomPresets: () => store.get().customItems ?? [],
+      onAdd: addItem,
+      onSaveCustom: saveCustomPreset,
+      onDeleteCustom: deleteCustomPreset,
+    }));
     root.append(card('Items', el('div', {}, [list, el('div', { class: 'pt-2' }, addBtn)])));
   };
 
@@ -37,6 +43,31 @@ export function mount(root, store, presetsItems) {
   function updateItem(id, patch) {
     const s = store.get();
     store.update({ items: s.items.map(x => x.id === id ? { ...x, ...patch } : x) });
+  }
+
+  // Persist a custom-made item into the user's "meus" preset list so it shows
+  // up in the Presets tab on future opens. Stored without per-instance fields
+  // (id/color/bubbleWrap/bagged) so each reuse gets its own.
+  function saveCustomPreset(item) {
+    const s = store.get();
+    const existing = s.customItems ?? [];
+    const id = 'custom-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const preset = {
+      id,
+      name: item.name,
+      length: item.length,
+      width: item.width,
+      height: item.height,
+      weight: item.weight,
+      flags: { ...(item.flags ?? {}) },
+      custom: true,
+    };
+    store.update({ customItems: [...existing, preset] });
+  }
+
+  function deleteCustomPreset(id) {
+    const s = store.get();
+    store.update({ customItems: (s.customItems ?? []).filter(x => x.id !== id) });
   }
 
   const unsub = store.subscribe(render);
@@ -89,7 +120,7 @@ function fmt(n) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
-function openAddModal(presets, onAdd) {
+function openAddModal({ factoryPresets, getCustomPresets, onAdd, onSaveCustom, onDeleteCustom }) {
   // daisyUI modal as a div (avoids <dialog>'s quirky event/close behavior).
   const dlg = el('div', { class: 'modal modal-open' });
   const box = el('div', { class: 'modal-box max-w-lg space-y-4' });
@@ -110,6 +141,33 @@ function openAddModal(presets, onAdd) {
     }, label);
   }
 
+  function presetRow(p, { isCustom }) {
+    const dims = el('span', { class: 'text-xs text-base-content/50 tabular' },
+      `${fmt(p.length)}×${fmt(p.width)}×${fmt(p.height)} cm · ${p.weight}g`);
+
+    const left = el('span', { class: 'text-left flex items-center gap-1.5 min-w-0' }, [
+      el('span', { class: 'truncate' }, p.name),
+      isCustom ? el('span', { class: 'badge badge-xs badge-primary badge-soft shrink-0', title: 'Salvo por você' }, 'meus') : null,
+    ]);
+
+    const pickBtn = el('button', {
+      type: 'button',
+      class: 'btn btn-ghost flex-1 justify-between',
+      onclick: () => { onAdd({ ...p }); close(); },
+    }, [left, dims]);
+
+    if (!isCustom) return pickBtn;
+
+    const delBtn = el('button', {
+      type: 'button',
+      class: 'btn btn-ghost btn-square btn-sm text-base-content/50 hover:text-error',
+      title: 'Remover dos meus produtos',
+      onclick: (e) => { e.stopPropagation(); onDeleteCustom(p.id); renderBody(); },
+    }, '×');
+
+    return el('div', { class: 'flex items-center gap-1' }, [pickBtn, delBtn]);
+  }
+
   function renderBody() {
     clear(box);
     box.append(el('div', { class: 'flex items-center justify-between' }, [
@@ -123,16 +181,16 @@ function openAddModal(presets, onAdd) {
     ]));
 
     if (activeTab === 'presets') {
-      box.append(el('div', { class: 'space-y-2' },
-        presets.map(p => el('button', {
-          type: 'button',
-          class: 'btn btn-ghost w-full justify-between',
-          onclick: () => { onAdd({ ...p }); close(); },
-        }, [
-          el('span', { class: 'text-left' }, p.name),
-          el('span', { class: 'text-xs text-base-content/50 tabular' },
-            `${fmt(p.length)}×${fmt(p.width)}×${fmt(p.height)} cm · ${p.weight}g`),
-        ]))));
+      const customs = getCustomPresets();
+      const rows = [];
+      if (customs.length > 0) {
+        rows.push(el('div', { class: 'text-xs uppercase tracking-wider text-base-content/50 px-1 pt-1' }, 'Meus produtos'));
+        for (const p of customs) rows.push(presetRow(p, { isCustom: true }));
+        rows.push(el('div', { class: 'divider-dashed' }));
+        rows.push(el('div', { class: 'text-xs uppercase tracking-wider text-base-content/50 px-1' }, 'Padrão'));
+      }
+      for (const p of factoryPresets) rows.push(presetRow(p, { isCustom: false }));
+      box.append(el('div', { class: 'space-y-2 max-h-96 overflow-y-auto' }, rows));
     } else {
       const inputs = {};
 
@@ -154,6 +212,14 @@ function openAddModal(presets, onAdd) {
         return el('label', { class: 'flex items-center gap-2 text-sm cursor-pointer select-none' }, [c, el('span', {}, label)]);
       }
 
+      // daisyUI toggle for "save to my products" — stands out from the regular flags.
+      const saveToggle = el('input', {
+        type: 'checkbox',
+        class: 'toggle toggle-primary toggle-sm',
+        name: 'saveToList',
+      });
+      inputs.saveToList = saveToggle;
+
       box.append(el('div', { class: 'space-y-3' }, [
         field('name', 'Nome', 'text', null),
         el('div', { class: 'grid grid-cols-3 gap-2' }, [
@@ -170,6 +236,15 @@ function openAddModal(presets, onAdd) {
             flagCheck('hasOriginalPlastic', 'Tem plástico original'),
             flagCheck('bubbleWrap', '🫧 Aplicar bolha'),
             flagCheck('bagged', '🛍️ Em saco plástico'),
+          ]),
+        ]),
+        el('label', {
+          class: 'flex items-start gap-3 p-3 rounded-box bg-base-300/40 border border-base-content/10 cursor-pointer select-none',
+        }, [
+          saveToggle,
+          el('div', { class: 'flex-1 min-w-0' }, [
+            el('div', { class: 'text-sm font-medium' }, 'Salvar este produto na lista'),
+            el('div', { class: 'text-xs text-base-content/60' }, 'Fica salvo na aba Presets como "meus" pra reusar depois.'),
           ]),
         ]),
         button('Adicionar item', () => {
@@ -189,6 +264,7 @@ function openAddModal(presets, onAdd) {
             coreDims: null,
           };
           if (!(item.length > 0 && item.width > 0 && item.height > 0 && item.weight > 0)) return;
+          if (inputs.saveToList.checked) onSaveCustom(item);
           onAdd(item);
           close();
         }, 'primary', 'w-full mt-2'),
