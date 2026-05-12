@@ -8,7 +8,9 @@ export function mount(root, getResults) {
       root.append(card('Resultado', el('p', { class: 'text-base-content/40 text-sm' }, 'Adicione itens pra começar.')));
       return;
     }
-    const { weights, packing } = r;
+    const { weights, packing, freightLimitG } = r;
+    const chargedG = weights.chargedKg * 1000;
+    const overFreight = freightLimitG > 0 && chargedG > freightLimitG;
 
     const grid = el('div', { class: 'stats stats-horizontal w-full bg-base-200 border border-base-content/10 shadow-none' }, [
       stat('Volume da caixa', `${weights.volumeCm3.toLocaleString('pt-BR')} cm³`),
@@ -35,6 +37,12 @@ export function mount(root, getResults) {
     } else if (packing.overflow.length > 0) {
       const overflowNames = packing.overflow.map(o => o.name || o.id).join(', ');
       root.append(alertBox('warning', `⚠ Não couberam: ${overflowNames}. Aumente a caixa.`));
+    }
+
+    if (overFreight) {
+      const excess = Math.round(chargedG - freightLimitG);
+      root.append(alertBox('error',
+        `⚠ Peso cobrado (${Math.round(chargedG)} g) ultrapassa o limite do frete escolhido (${freightLimitG} g) — excedeu em ${excess} g. O seguro pode não cobrir.`));
     }
   }
 

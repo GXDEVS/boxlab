@@ -19,6 +19,20 @@ const AIR_LAYER_OPTIONS = [
   { value: 3, label: '+3 cm (bem folgado)' },
 ];
 
+// Limites de peso (g) por método de frete CSSBuy. Acima do limite escolhido,
+// o seguro do frete pode não cobrir — só sinalizamos no painel de resultado.
+// 0 = nenhum limite definido.
+const FREIGHT_LIMIT_OPTIONS = [
+  { value: 0,     label: '— sem limite definido —' },
+  { value: 2000,  label: '≤ 2 kg (pequeno pacote)' },
+  { value: 2500,  label: '≤ 2,5 kg' },
+  { value: 3000,  label: '≤ 3 kg' },
+  { value: 5000,  label: '≤ 5 kg' },
+  { value: 10000, label: '≤ 10 kg' },
+  { value: 20000, label: '≤ 20 kg' },
+  { value: 30000, label: '≤ 30 kg (limite máximo CSSBuy)' },
+];
+
 export function mount(root, store, presetsPackaging) {
   clear(root);
 
@@ -98,6 +112,28 @@ export function mount(root, store, presetsPackaging) {
     },
   }, AIR_LAYER_OPTIONS.map(o => el('option', { value: String(o.value) }, o.label)));
 
+  // ── Freight (CSSBuy) limit select ─────────────────────────
+  // Used by results-panel to warn when "Você paga por" exceeds the freight cap.
+  const freightSelect = select({
+    onchange: (e) => {
+      const v = parseInt(e.target.value, 10) || 0;
+      store.update({ packagingOptions: { ...store.get().packagingOptions, freightLimitG: v } });
+    },
+  }, FREIGHT_LIMIT_OPTIONS.map(o => el('option', { value: String(o.value) }, o.label)));
+
+  // ── Bag auto-fit toggle ───────────────────────────────────
+  // Bolsa plástica se molda ao conteúdo. Quando on, preset+sliders ficam
+  // ocultos e o tamanho da bolsa = bbox dos itens (com camada de ar).
+  const bagAutoFitToggle = el('input', {
+    type: 'checkbox',
+    class: 'toggle toggle-primary toggle-sm',
+    onchange: (e) => {
+      store.update({
+        packagingOptions: { ...store.get().packagingOptions, bagAutoFit: e.target.checked },
+      });
+    },
+  });
+
   // ── Packaging option toggles ──────────────────────────────
   const optInputs = {};
   const optsRow = el('div', { class: 'flex flex-wrap gap-3 text-sm' });
@@ -135,6 +171,24 @@ export function mount(root, store, presetsPackaging) {
     makeShipBtn('original', '✓ Caixa original', 'Sem caixa externa — usa a caixa do próprio produto.'),
   ]);
 
+  // Wrappers we toggle in/out based on type + auto-fit:
+  //   - presetBlock + slidersWrap → hidden when bag auto-fit is on (dims come from items)
+  //   - bagAutoFitBlock → only shown when type='bag'
+  const presetBlock = el('div', { class: 'space-y-1.5' }, [
+    el('label', { class: labelClass }, 'Preset'),
+    presetSelect,
+  ]);
+
+  const bagAutoFitBlock = el('label', {
+    class: 'flex items-start gap-3 p-3 rounded-box bg-base-300/40 border border-base-content/10 cursor-pointer select-none',
+  }, [
+    bagAutoFitToggle,
+    el('div', { class: 'flex-1 min-w-0' }, [
+      el('div', { class: 'text-sm font-medium' }, 'Ajustar bolsa aos itens'),
+      el('div', { class: 'text-xs text-base-content/60' }, 'Bolsa plástica se molda ao conteúdo. Desligue para definir manualmente.'),
+    ]),
+  ]);
+
   // The container settings (Tipo, Preset, sliders, air layer) only make sense
   // in 'external' mode. We keep them in a wrapper so we can toggle visibility.
   const containerBlock = el('div', { class: 'space-y-4' }, [
@@ -142,10 +196,8 @@ export function mount(root, store, presetsPackaging) {
       el('label', { class: labelClass }, 'Tipo'),
       typeToggle,
     ]),
-    el('div', { class: 'space-y-1.5' }, [
-      el('label', { class: labelClass }, 'Preset'),
-      presetSelect,
-    ]),
+    bagAutoFitBlock,
+    presetBlock,
     sliderRow,
     el('div', { class: 'space-y-1.5' }, [
       el('label', { class: labelClass }, 'Camada de ar (folga interna)'),
@@ -167,6 +219,13 @@ export function mount(root, store, presetsPackaging) {
     ]),
     containerBlock,
     originalModeHint,
+    el('div', { class: 'divider-dashed' }),
+    el('div', { class: 'space-y-1.5' }, [
+      el('label', { class: labelClass }, 'Frete CSSBuy (limite de peso)'),
+      freightSelect,
+      el('p', { class: 'text-xs text-base-content/50' },
+        'Se o peso cobrado passar do limite, o seguro do frete escolhido pode não cobrir.'),
+    ]),
     el('div', { class: 'divider-dashed' }),
     el('div', { class: 'space-y-2' }, [
       el('label', { class: labelClass }, 'Opções de embalagem'),
@@ -208,6 +267,16 @@ export function mount(root, store, presetsPackaging) {
       lastTypeRendered = s.box.type;
     }
 
+    // Bag auto-fit: toggle visible only for bag type. When on, hide preset
+    // + sliders since dims come from items.
+    const isBag = s.box.type === 'bag';
+    const autoFit = !!(s.packagingOptions.bagAutoFit ?? true);
+    bagAutoFitBlock.style.display = isBag ? '' : 'none';
+    if (bagAutoFitToggle.checked !== autoFit) bagAutoFitToggle.checked = autoFit;
+    const hideManualDims = isBag && autoFit;
+    presetBlock.style.display = hideManualDims ? 'none' : '';
+    sliderRow.style.display = hideManualDims ? 'none' : '';
+
     const desired = s.box.presetId ?? '';
     if (presetSelect.value !== desired) presetSelect.value = desired;
 
@@ -218,6 +287,9 @@ export function mount(root, store, presetsPackaging) {
 
     const air = String(s.packagingOptions.airLayerCm ?? 0);
     if (airSelect.value !== air) airSelect.value = air;
+
+    const freight = String(s.packagingOptions.freightLimitG ?? 0);
+    if (freightSelect.value !== freight) freightSelect.value = freight;
 
     for (const [k] of PACK_OPTS) {
       const want = !!s.packagingOptions[k];
